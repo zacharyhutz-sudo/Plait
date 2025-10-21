@@ -378,11 +378,11 @@ function renderSavedList(){
     .forEach(r => {
       const li = document.createElement('li');
       // left side: clickable name
-      const open = document.createElement('button');
-      open.className = 'saved-open';
-      open.type = 'button';
-      open.setAttribute('data-id', r.id);
-      open.textContent = r.name;
+     const open = document.createElement('span');
+     open.className = 'saved-open';
+     open.setAttribute('data-id', r.id);
+     open.textContent = r.name;
+
 
       // right side: servings (muted)
       const right = document.createElement('span');
