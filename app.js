@@ -1,5 +1,4 @@
 // Basic Prept logic: load sample or import via backend (optional).
-// If you set WORKER_BASE to your Cloudflare Worker endpoint, import will work.
 const WORKER_BASE = "https://prept-parse.zacharyhutz.workers.dev/?url=";
 
 const form = document.getElementById('import-form');
@@ -13,24 +12,21 @@ const groceryList = document.getElementById('grocery-list');
 const servingsInput = document.getElementById('servings');
 const messages = document.getElementById('messages');
 
-// NEW: steps
+// Steps
 const stepsSection = document.getElementById('instructions');
 const stepsList = document.getElementById('steps-list');
 
-// Utility: show a temporary message
 function say(msg){
   messages.textContent = msg;
   setTimeout(()=>messages.textContent='', 5000);
 }
 
-// Scale a numeric quantity at start of ingredient line, e.g. "2 cups flour"
+// Scale a numeric quantity at start of ingredient line, e.g. "1 1/2 cups"
 function scaleLine(line, factor){
-  // Match leading fraction/number like "1 1/2", "2", "0.5"
   const match = line.match(/^\s*((?:\d+\s+)?\d*(?:\.\d+)?(?:\s*\/?\s*\d+)?)\b(.*)$/);
-  if(!match || !match[1].trim()) return line; // no numeric start
+  if(!match || !match[1].trim()) return line;
   const qtyStr = match[1].replace(/\s+/g,' ').trim();
   let qty = 0;
-  // Convert "1 1/2" or "3/4"
   if(qtyStr.includes('/')){
     const parts = qtyStr.split(' ');
     if(parts.length === 2){
@@ -49,14 +45,13 @@ function scaleLine(line, factor){
   return line.replace(match[1], scaled.toString());
 }
 
-// Render recipe from schema.org JSON
 function renderRecipe(schema){
   const name = schema.name || 'Untitled Recipe';
   const baseYield = parseInt(schema.recipeYield) || parseInt(schema.recipeServings) || 4;
   titleEl.textContent = name;
   servingsInput.value = baseYield;
 
-  // INGREDIENTS
+  // Ingredients
   const ings = Array.isArray(schema.recipeIngredient) ? schema.recipeIngredient : [];
   ingredientsList.innerHTML = '';
   ings.forEach(i => {
@@ -65,7 +60,7 @@ function renderRecipe(schema){
     ingredientsList.appendChild(li);
   });
 
-  // STEPS / INSTRUCTIONS (expects array of strings from Worker)
+  // Steps (expects array of strings)
   const instr = Array.isArray(schema.recipeInstructions) ? schema.recipeInstructions : [];
   stepsList.innerHTML = '';
   if (instr.length) {
@@ -79,19 +74,15 @@ function renderRecipe(schema){
     stepsSection.classList.add('hidden');
   }
 
-  // Build grocery list after ingredients are in the DOM
   buildGroceryList();
   recipeSection.classList.remove('hidden');
 }
 
-// Very naive grouping; later you can normalize & categorize.
 function buildGroceryList(){
   groceryList.innerHTML = '';
   const factor = (parseInt(servingsInput.value) || 1) / (getBaseServings() || 1);
   const lines = [...ingredientsList.querySelectorAll('li')].map(li => li.textContent);
   const scaled = lines.map(l => scaleLine(l, factor));
-
-  // Group exact string matches
   const map = new Map();
   scaled.forEach(line => {
     const key = line.toLowerCase().trim();
@@ -108,14 +99,12 @@ function getBaseServings(){
   return parseInt(servingsInput.getAttribute('data-base')) || parseInt(servingsInput.defaultValue) || 4;
 }
 
-// Track base servings at load
 window.addEventListener('load', ()=>{
   servingsInput.setAttribute('data-base', servingsInput.value);
 });
 
 servingsInput.addEventListener('input', buildGroceryList);
 
-// Load the local sample (no backend required)
 loadSampleBtn.addEventListener('click', async ()=>{
   try{
     const res = await fetch('./sample-data/example-recipe.json');
@@ -128,48 +117,39 @@ loadSampleBtn.addEventListener('click', async ()=>{
   }
 });
 
-// Import via Cloudflare Worker
 form.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const url = urlInput.value.trim();
   if(!url){ say('Enter a recipe URL.'); return; }
-  if(!WORKER_BASE){
-    say('No backend configured. Click "Load Sample" or set WORKER_BASE in app.js.');
-    return;
-  }
+  if(!WORKER_BASE){ say('No backend configured.'); return; }
   try {
+    window.__preptSetLoading?.(true);
     const res = await fetch(WORKER_BASE + encodeURIComponent(url));
     const text = await res.text();
-
-    // Try to parse JSON for clearer error messages
     let payload;
     try { payload = JSON.parse(text); } catch {
       say('Worker returned non-JSON: ' + text.slice(0,120) + '…');
       return;
     }
-
     if(!res.ok){
       say(`Worker error ${res.status}: ${payload.error || 'Unknown error'}`);
+      ingredientsList.innerHTML = '<li class="empty">No ingredients</li>';
+      stepsList.innerHTML = '';
+      stepsSection.classList.add('hidden');
       return;
     }
     if(!payload || !payload.recipe){
       say('No recipe found at that URL. Try a different site.');
+      ingredientsList.innerHTML = '<li class="empty">No ingredients</li>';
+      stepsList.innerHTML = '';
+      stepsSection.classList.add('hidden');
       return;
     }
     renderRecipe(payload.recipe);
   } catch (err) {
     console.error(err);
     say('Network error talking to the Worker.');
+  } finally {
+    window.__preptSetLoading?.(false);
   }
-  try {
-  window.__preptSetLoading?.(true);          // <— start
-  const res = await fetch(WORKER_BASE + encodeURIComponent(url));
-  …
-} catch (err) {
-  …
-} finally {
-  window.__preptSetLoading?.(false);         // <— stop
-}
-
 });
-
