@@ -10,24 +10,50 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- Sidebar + backdrop -->
+  <aside id="sidebar" class="sidebar" aria-hidden="true">
+    <div class="sidebar-head">
+      <div class="logo small">P</div>
+      <strong>Plait</strong>
+      <button id="sidebar-close" class="icon-btn" aria-label="Close menu">×</button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="sidebar-link">About</a>
+      <a href="#" class="sidebar-link">Changelog</a>
+      <a href="https://zacharyhutz-sudo.github.io/Plait/" class="sidebar-link">Home</a>
+      <a href="https://schema.org/Recipe" class="sidebar-link" target="_blank" rel="noreferrer">Recipe schema</a>
+    </nav>
+    <div class="sidebar-foot">
+      <small>© Plait</small>
+    </div>
+  </aside>
+  <div id="sidebar-backdrop" class="backdrop" aria-hidden="true"></div>
+
   <div class="page">
     <header class="header container">
-      <div class="brand">
+      <div class="left">
+        <button id="sidebar-toggle" class="icon-btn" aria-label="Open menu">
+          <!-- simple hamburger -->
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Off-center brand block -->
+      <div class="brand offcenter">
         <div class="logo">P</div>
         <div class="brand-text">
           <h1>Plait</h1>
-          <span class="tagline">Import recipes • Scale • Cook smarter</span>
         </div>
       </div>
-      <nav class="nav">
-        <button id="theme-toggle" class="btn ghost" style="margin-left:8px">Theme</button>
-      </nav>
+
+      <div class="right"><!-- intentionally empty (keeps brand visually off-center) --></div>
     </header>
 
     <section class="hero container">
       <h2 class="hero-title">Paste a recipe link. Get a <span class="accent">clean list</span>.</h2>
-      <p class="hero-sub">Plait turns any recipe link into scaled ingredients and step-by-step highlights.</p>
-
+      <!-- subheader intentionally removed -->
       <form id="import-form" class="import">
         <label class="sr-only" for="url">Recipe URL</label>
         <div class="input-wrap">
@@ -83,14 +109,15 @@
     </main>
 
     <footer class="footer container">
-      <span class="muted">Plait v0.4.4 • GitHub Pages • Cloudflare Worker</span>
+      <span class="muted">Plait • GitHub Pages • Cloudflare Worker</span>
       <span class="muted"><a href="https://schema.org/Recipe" target="_blank" rel="noreferrer">Schema.org Recipe</a></span>
     </footer>
 
     <div id="messages" class="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=4.4"></script>
-  <script src="app-ui-patch.js?v=4.1"></script>
+  <script src="app.js?v=4.5"></script>
+  <script src="app-ui-patch.js?v=4.5"></script>
 </body>
 </html>
+
