@@ -1,4 +1,4 @@
-// Plait v0.4.4 — Clean inline highlights (no popover) + overlap-safe matching
+// Plait v0.4.5 — inline blue highlights (click to show amount via toast) + overlap-safe matching
 const WORKER_BASE = "https://prept-parse.zacharyhutz.workers.dev/?url=";
 
 const form = document.getElementById('import-form');
@@ -18,30 +18,52 @@ const stepsList = document.getElementById('steps-list');
 let BASE_SERVINGS = 4;
 let parsedIngredients = []; // {raw, qty, unit, name, key, variants[], keys[]}
 
+// ---------- init ----------
 (function ensureInit(){
   function init() {
     if (!form) { console.error('Plait: #import-form not found.'); return; }
     if (!form.__plaitBound) { form.addEventListener('submit', onSubmit); form.__plaitBound = true; }
     copyBtn?.addEventListener('click', copyIngredients);
     servingsInput?.addEventListener('input', onServingsChange);
+    stepsList?.addEventListener('click', onStepsClick); // <— make highlights clickable
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 
-function say(msg){ messages.textContent = msg; setTimeout(()=>messages.textContent='', 5000); }
+function say(msg){ messages.textContent = msg; setTimeout(()=>messages.textContent='', 3500); }
 
-const UNIT_WORDS = ["teaspoon","teaspoons","tsp","tablespoon","tablespoons","tbsp","cup","cups","ounce","ounces","oz","pound","pounds","lb","lbs","gram","grams","g","kilogram","kilograms","kg","milliliter","milliliters","ml","liter","liters","l","clove","cloves","pinch","pinches","dash","dashes","can","cans","package","packages","packet","packets"];
-const DESCRIPTORS = new Set(["fresh","large","small","medium","extra","extra-large","xl","jumbo","optional","chopped","minced","diced","shredded","sliced","crushed","softened","melted","divided","room-temperature","room","temperature","to","taste","rinsed","drained","packed","granulated","powdered","ground"]);
+// ---------- parsing helpers ----------
+const UNIT_WORDS = [
+  "teaspoon","teaspoons","tsp","tablespoon","tablespoons","tbsp",
+  "cup","cups","ounce","ounces","oz","pound","pounds","lb","lbs",
+  "gram","grams","g","kilogram","kilograms","kg","milliliter","milliliters","ml",
+  "liter","liters","l","clove","cloves","pinch","pinches","dash","dashes",
+  "can","cans","package","packages","packet","packets"
+];
+const DESCRIPTORS = new Set([
+  "fresh","large","small","medium","extra","extra-large","xl","jumbo","optional",
+  "chopped","minced","diced","shredded","sliced","crushed","softened","melted",
+  "divided","room-temperature","room","temperature","to","taste","rinsed","drained",
+  "packed","granulated","powdered","ground"
+]);
 
 function parseIngredient(line){
   let raw = line.trim();
   const m = raw.match(/^\s*((?:\d+\s+)?\d*(?:\.\d+)?(?:\s*\/\s*\d+)?)\s+(.*)$/);
   let qty = null, unit = "", rest = raw;
-  if(m && m[1].trim()){ const qtyStr = m[1].replace(/\s+/g,' ').trim(); qty = toNumber(qtyStr); rest = m[2].trim(); }
+  if(m && m[1].trim()){
+    const qtyStr = m[1].replace(/\s+/g,' ').trim();
+    qty = toNumber(qtyStr);
+    rest = m[2].trim();
+  }
   let tokens = rest.split(/\s+/);
-  if(tokens.length){ const maybeUnit = tokens[0].toLowerCase(); if(UNIT_WORDS.includes(maybeUnit)){ unit = tokens.shift(); } }
+  if(tokens.length){
+    const maybeUnit = tokens[0].toLowerCase();
+    if(UNIT_WORDS.includes(maybeUnit)){ unit = tokens.shift(); }
+  }
   const name = tokens.join(' ').trim() || rest;
   const key = normalizeKey(name);
+
   const variants = buildNameVariants(name);
   const keys = variants.map(v => normalizeKey(v));
   return { raw, qty, unit, name, key, variants, keys };
@@ -50,11 +72,18 @@ function parseIngredient(line){
 function buildNameVariants(name){
   const noParen = name.replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim();
   const beforeComma = noParen.split(',')[0].trim();
-  const filtered = beforeComma.split(/\s+/).filter(tok => !DESCRIPTORS.has(tok.toLowerCase())).join(' ').replace(/\s+/g,' ').trim();
+  const filtered = beforeComma
+    .split(/\s+/)
+    .filter(tok => !DESCRIPTORS.has(tok.toLowerCase()))
+    .join(' ')
+    .replace(/\s+/g,' ')
+    .trim();
   const parts = filtered.split(/\s+/).filter(Boolean);
   const head = parts.length ? parts[parts.length-1] : filtered;
+
   const singular = toSingular(filtered);
   const headSing = toSingular(head);
+
   const set = new Set([name, noParen, beforeComma, filtered, singular, head, headSing].map(s=>s.trim()).filter(Boolean));
   return [...set].sort((a,b)=> b.length - a.length);
 }
@@ -74,8 +103,13 @@ function toNumber(q){
   if(!q) return null;
   if(q.includes('/')){
     const parts = q.split(' ');
-    if(parts.length === 2){ const whole = parseFloat(parts[0])||0; const f = parts[1].split('/'); return whole + (parseFloat(f[0])/parseFloat(f[1])); }
-    const f = q.split('/'); return parseFloat(f[0])/parseFloat(f[1]);
+    if(parts.length === 2){
+      const whole = parseFloat(parts[0])||0;
+      const f = parts[1].split('/');
+      return whole + (parseFloat(f[0])/parseFloat(f[1]));
+    }
+    const f = q.split('/');
+    return parseFloat(f[0])/parseFloat(f[1]);
   }
   const n = parseFloat(q);
   return isNaN(n)?null:n;
@@ -85,16 +119,20 @@ function normalizeKey(s){ return s.toLowerCase().replace(/[^a-z0-9\s]/g,' ').rep
 function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function htmlEscape(s){ return s.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 
+// ---------- rendering ----------
 function renderRecipe(schema){
   const name = schema.name || 'Untitled Recipe';
   BASE_SERVINGS = parseInt(schema.recipeYield) || parseInt(schema.recipeServings) || 4;
   titleEl.textContent = name;
   servingsInput.value = BASE_SERVINGS;
   servingsInput.setAttribute('data-base', BASE_SERVINGS);
+
   const ings = Array.isArray(schema.recipeIngredient) ? schema.recipeIngredient : [];
   parsedIngredients = ings.map(parseIngredient);
+
   renderIngredients();
   renderSteps(schema.recipeInstructions);
+
   recipeSection?.classList.remove('hidden');
 }
 
@@ -114,10 +152,14 @@ function renderIngredients(){
 }
 
 function renderSteps(instructions){
-  if(!stepsList || !stepsSection){ console.warn('Plait: steps DOM not found; skipping step rendering.'); return; }
+  if(!stepsList || !stepsSection){
+    console.warn('Plait: steps DOM not found; skipping step rendering.');
+    return;
+  }
   const arr = Array.isArray(instructions) ? instructions : [];
   stepsList.innerHTML = '';
 
+  // Build variant map (longest-first)
   const variantMap = [];
   for(const ing of parsedIngredients){
     for(const v of ing.variants){
@@ -132,6 +174,8 @@ function renderSteps(instructions){
   for (const step of arr) {
     let escaped = htmlEscape(step);
     const matches = [];
+
+    // Collect all matches
     for (const { text, key } of variantMap) {
       const re = new RegExp(`(?<![A-Za-z])${escapeRegExp(text)}(?![A-Za-z])`, 'gi');
       let m;
@@ -139,30 +183,65 @@ function renderSteps(instructions){
         matches.push({ start: m.index, end: m.index + m[0].length, label: m[0], key });
       }
     }
+
+    // Sort by position, then longest-first; filter overlaps
     matches.sort((a,b)=> a.start - b.start || b.label.length - a.label.length);
     const filtered = [];
     let lastEnd = -1;
     for (const m of matches) {
       if (m.start >= lastEnd) { filtered.push(m); lastEnd = m.end; }
     }
+
+    // Create inline clickable spans
     let result = '';
     let pos = 0;
     for (const m of filtered) {
       result += escaped.slice(pos, m.start);
-      result += `<span class="ing-ref" data-key="${m.key}">${m.label}</span>`;
+      result += `<span class="ing-ref" data-key="${m.key}" role="button" tabindex="0">${m.label}</span>`;
       pos = m.end;
     }
     result += escaped.slice(pos);
-    const li = document.createElement('li'); li.innerHTML = result; items.push(li)
+
+    const li = document.createElement('li');
+    li.innerHTML = result;
+    items.push(li);
   }
   for(const li of items) stepsList.appendChild(li);
   stepsSection.classList.toggle('hidden', stepsList.children.length === 0);
 }
 
+// ---------- click on highlighted ingredient -> show amount in toast ----------
+function onStepsClick(e){
+  const el = e.target.closest?.('.ing-ref');
+  if(!el) return;
+  const key = el.getAttribute('data-key');
+  // Find ingredient by any variant key match
+  const ing = parsedIngredients.find(i => i.keys.includes(key)) || parsedIngredients.find(i => i.key === key);
+  if(!ing){ return; }
+
+  const factor = (parseInt(servingsInput.value) || BASE_SERVINGS) / (BASE_SERVINGS || 1);
+  const qty = (typeof ing.qty === 'number') ? ing.qty * factor : null;
+  const amount = (qty == null) ? '—' : formatAmount(qty);
+  const unit = ing.unit || '(unit)';
+  say(`${ing.name} — ${amount} ${unit}`.trim());
+}
+
+// Friendly fraction formatting (nearest 1/8)
+function formatAmount(n){
+  const rounded = Math.round(n * 8) / 8;
+  const whole = Math.floor(rounded + 1e-9);
+  const frac = rounded - whole;
+  const map = { 0: '', 0.125:'1/8', 0.25:'1/4', 0.375:'3/8', 0.5:'1/2', 0.625:'5/8', 0.75:'3/4', 0.875:'7/8' };
+  const fracStr = map[Number(frac.toFixed(3))] || '';
+  return (whole > 0 ? whole : '') + (whole>0 && fracStr ? ' ' : '') + (fracStr || (whole? '' : '0'));
+}
+
+// ---------- events ----------
 async function onSubmit(e){
   e.preventDefault();
   const url = urlInput.value.trim();
   if(!url){ say('Enter a recipe URL.'); return; }
+
   try {
     window.__preptSetLoading?.(true);
     const res = await fetch(WORKER_BASE + encodeURIComponent(url));
@@ -174,8 +253,25 @@ async function onSubmit(e){
   } catch (err) {
     console.error('Fetch to worker failed:', err);
     say(err?.name === 'AbortError' ? 'Worker timed out.' : 'Network error (see console).');
-  } finally { window.__preptSetLoading?.(false); }
+  } finally {
+    window.__preptSetLoading?.(false);
+  }
 }
 
 function onServingsChange(){ renderIngredients(); }
-async function copyIngredients(){ const lines = [...ingredientsList.querySelectorAll('li')].map(li => li.textContent.trim()); try{ await navigator.clipboard.writeText(lines.join('\n')); say('Ingredients copied!'); }catch{ say('Could not copy.'); } }
+
+async function copyIngredients(){
+  const lines = [...ingredientsList.querySelectorAll('li')].map(li => li.textContent.trim());
+  try{ await navigator.clipboard.writeText(lines.join('\n')); say('Ingredients copied!'); }catch{ say('Could not copy.'); }
+}
+
+// ---------- sample ----------
+loadSampleBtn?.addEventListener('click', async ()=>{
+  try{
+    const res = await fetch('./sample-data/example-recipe.json');
+    const data = await res.json();
+    const node = Array.isArray(data) ? data.find(d => d['@type']==='Recipe') : (data['@type']==='Recipe' ? data : null);
+    if(!node){ say('Sample missing a Recipe object.'); return; }
+    renderRecipe(node);
+  }catch(e){ console.error(e); say('Could not load sample data.'); }
+});
