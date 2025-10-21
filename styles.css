@@ -52,3 +52,42 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter, system-ui
 .popover{position:fixed;min-width:200px;max-width:260px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:10px 12px;color:var(--ink);z-index:100}
 .popover.hidden{display:none}
 .toast{position:fixed;right:18px;bottom:18px;max-width:340px;background:var(--card);color:var(--ink);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);z-index:50;min-height:42px}
+
+/* --- Icon size & alignment fixes --- */
+.card-head svg,
+.header svg,
+.chip-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+  opacity: 0.8;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+
+/* Keep the title text vertically centered beside the icon */
+.card-head h4,
+.card-head svg {
+  display: inline-flex;
+  align-items: center;
+}
+
+.card-head h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Reduce Steps/Ingredients list spacing a bit */
+.list li,
+.steps li {
+  margin: 0.25rem 0;
+  line-height: 1.45;
+}
+
+/* Tighten the recipe title area */
+.recipe-title {
+  font-size: 1.6rem;
+  margin-bottom: 0.75rem;
+}
+
