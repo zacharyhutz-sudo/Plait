@@ -173,3 +173,19 @@ body{
   .list li, .steps li { margin: 6px 0; line-height: 1.5; }
   .brand.offcenter{ transform: none; }
 }
+
+/* Saved Recipes hover interaction */
+.saved-list .saved-open {
+  color: inherit;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.saved-list .saved-open:hover {
+  color: var(--accent);
+}
+.saved-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
