@@ -161,5 +161,15 @@ form.addEventListener('submit', async (e)=>{
     console.error(err);
     say('Network error talking to the Worker.');
   }
+  try {
+  window.__preptSetLoading?.(true);          // <— start
+  const res = await fetch(WORKER_BASE + encodeURIComponent(url));
+  …
+} catch (err) {
+  …
+} finally {
+  window.__preptSetLoading?.(false);         // <— stop
+}
+
 });
 
