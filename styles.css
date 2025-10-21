@@ -212,3 +212,12 @@ body{
   justify-content: space-between;
   align-items: center;
 }
+
+
+/* === Patch: left-align header to viewport edge and keep hamburger + logo fully left === */
+.header.container{
+  max-width: none;   /* full-bleed header */
+  margin: 0;         /* no centering */
+  padding-left: 18px;
+  padding-right: 18px;
+}
