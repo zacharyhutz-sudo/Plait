@@ -1,4 +1,4 @@
-// Plait v0.4.1 hotfix
+// Plait v0.4.1 (null-safe)
 const WORKER_BASE = "https://prept-parse.zacharyhutz.workers.dev/?url=";
 
 const form = document.getElementById('import-form');
@@ -12,6 +12,7 @@ const servingsInput = document.getElementById('servings');
 const messages = document.getElementById('messages');
 const copyBtn = document.getElementById('copy-ingredients');
 
+// Steps (may be null if HTML section was removed/renamed)
 const stepsSection = document.getElementById('instructions');
 const stepsList = document.getElementById('steps-list');
 const popover = document.getElementById('popover');
@@ -19,20 +20,22 @@ const popover = document.getElementById('popover');
 let BASE_SERVINGS = 4;
 let parsedIngredients = [];
 
+// ---- init
 (function ensureInit(){
   function init() {
     if (!form) { console.error('Plait: #import-form not found.'); return; }
-    if (!form.__plaitBound) { form.addEventListener('submit', onSubmit); form.__plaitBound = true; }
+    if (!form.__plaitBound) { form.addEventListener('submit', onSubmit); form.__plaitBound = true; console.log('Plait: submit handler bound.'); }
     copyBtn?.addEventListener('click', copyIngredients);
-    servingsInput.addEventListener('input', onServingsChange);
-    stepsList.addEventListener('click', onStepsClick);
-    window.addEventListener('click', (e)=>{ if(!popover.classList.contains('hidden') && !e.target.closest('.ing-ref')) hidePopover(); });
+    servingsInput?.addEventListener('input', onServingsChange);
+    stepsList?.addEventListener('click', onStepsClick);
+    window.addEventListener('click', (e)=>{ if(popover && !popover.classList.contains('hidden') && !e.target.closest('.ing-ref')) hidePopover(); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 
 function say(msg){ messages.textContent = msg; setTimeout(()=>messages.textContent='', 5000); }
 
+// --------- parsing helpers
 const UNIT_WORDS = ["teaspoon","teaspoons","tsp","tablespoon","tablespoons","tbsp","cup","cups","ounce","ounces","oz","pound","pounds","lb","lbs","gram","grams","g","kilogram","kilograms","kg","milliliter","milliliters","ml","liter","liters","l","clove","cloves","pinch","pinches","dash","dashes","can","cans","package","packages","packet","packets"];
 
 function parseIngredient(line){
@@ -52,16 +55,22 @@ function normalizeKey(s){ return s.toLowerCase().replace(/[^a-z0-9\s]/g,'').repl
 function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function htmlEscape(s){ return s.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 
+// --------- rendering
 function renderRecipe(schema){
   const name = schema.name || 'Untitled Recipe';
   BASE_SERVINGS = parseInt(schema.recipeYield) || parseInt(schema.recipeServings) || 4;
   titleEl.textContent = name;
   servingsInput.value = BASE_SERVINGS;
   servingsInput.setAttribute('data-base', BASE_SERVINGS);
+
+  // model
   const ings = Array.isArray(schema.recipeIngredient) ? schema.recipeIngredient : [];
   parsedIngredients = ings.map(parseIngredient);
-  renderIngredients(); renderSteps(schema.recipeInstructions);
-  recipeSection.classList.remove('hidden');
+
+  renderIngredients();
+  renderSteps(schema.recipeInstructions);
+
+  recipeSection?.classList.remove('hidden');
 }
 
 function renderIngredients(){
@@ -80,6 +89,10 @@ function renderIngredients(){
 }
 
 function renderSteps(instructions){
+  if(!stepsList || !stepsSection){
+    console.warn('Plait: steps DOM not found; skipping step rendering.');
+    return;
+  }
   const arr = Array.isArray(instructions) ? instructions : [];
   stepsList.innerHTML = '';
   const names = parsedIngredients.map(i => i.name).filter(Boolean).sort((a,b)=> b.length - a.length);
@@ -92,35 +105,40 @@ function renderSteps(instructions){
   stepsSection.classList.toggle('hidden', stepsList.children.length === 0);
 }
 
+// --------- events
 async function onSubmit(e){
   e.preventDefault();
   const url = urlInput.value.trim();
   if(!url){ say('Enter a recipe URL.'); return; }
-  if(!WORKER_BASE){ say('No backend configured.'); return; }
+
+  const requestUrl = WORKER_BASE + encodeURIComponent(url);
+  console.log('[Import] Request URL:', requestUrl);
 
   try {
-    window.__preptSetLoading?.(true);
-    const controller = new AbortController(); const t = setTimeout(()=>controller.abort(), 15000);
-    const res = await fetch(WORKER_BASE + encodeURIComponent(url), { signal: controller.signal });
-    clearTimeout(t);
+    const res = await fetch(requestUrl);
     const text = await res.text();
-    let payload; try { payload = JSON.parse(text); } catch { console.error('Worker non-JSON:', text); say('Worker returned non-JSON (see console).'); return; }
-    if(!res.ok){ console.error('Worker error:', res.status, payload); say(`Worker error ${res.status}: ${payload.error || 'Unknown error'}`); return; }
-    if(!payload || !payload.recipe){ say('No recipe found at that URL.'); return; }
+    let payload;
+    try { payload = JSON.parse(text); } catch { console.error('[Import] Worker non-JSON:', text.slice(0,400)); say('Worker returned non-JSON (see console).'); return; }
+
+    if(!res.ok){ console.error('[Import] Worker error:', res.status, payload); say(`Worker error ${res.status}: ${payload.error || 'Unknown error'}`); return; }
+    if(!payload || !payload.recipe){ console.error('[Import] No recipe in payload:', payload); say('No recipe found at that URL.'); return; }
+
     renderRecipe(payload.recipe);
   } catch (err) {
-    console.error('Fetch to worker failed:', err);
-    say(err?.name === 'AbortError' ? 'Worker timed out.' : 'Network error (see console).');
-  } finally {
-    window.__preptSetLoading?.(false);
+    console.error('[Import] Fetch threw:', err.name, err.message, err);
+    say(err?.name === 'AbortError' ? 'Worker timed out.' : `Network error: ${err?.message || 'see console'}`);
   }
 }
 
 function onServingsChange(){ renderIngredients(); }
-async function copyIngredients(){ const lines = [...ingredientsList.querySelectorAll('li')].map(li => li.textContent.trim()); try{ await navigator.clipboard.writeText(lines.join('\n')); say('Ingredients copied!'); }catch{ say('Could not copy.'); } }
+
+async function copyIngredients(){
+  const lines = [...ingredientsList.querySelectorAll('li')].map(li => li.textContent.trim());
+  try{ await navigator.clipboard.writeText(lines.join('\n')); say('Ingredients copied!'); }catch{ say('Could not copy.'); }
+}
 
 function onStepsClick(e){
-  const btn = e.target.closest('.ing-ref'); if(!btn) return;
+  const btn = e.target.closest?.('.ing-ref'); if(!btn) return;
   const key = btn.getAttribute('data-key'); const ing = parsedIngredients.find(i => i.key === key); if(!ing){ hidePopover(); return; }
   const factor = (parseInt(servingsInput.value) || BASE_SERVINGS) / (BASE_SERVINGS || 1);
   let qtyText = (typeof ing.qty === 'number') ? String(+(ing.qty * factor).toFixed(2)) : '—';
@@ -130,15 +148,16 @@ function onStepsClick(e){
 }
 
 function showPopover(html, x, y){
+  if(!popover) return;
   popover.innerHTML = html; popover.classList.remove('hidden');
   const pad = 10; const w = innerWidth, h = innerHeight; const width = 240, height = 90;
   let left = Math.min(x + pad, w - width - pad); let top = Math.min(y + pad, h - height - pad);
   popover.style.left = left + 'px'; popover.style.top = top + 'px';
 }
-function hidePopover(){ popover.classList.add('hidden'); }
+function hidePopover(){ popover?.classList.add('hidden'); }
 
-// Sample
-loadSampleBtn.addEventListener('click', async ()=>{
+// sample loader
+loadSampleBtn?.addEventListener('click', async ()=>{
   try{
     const res = await fetch('./sample-data/example-recipe.json');
     const data = await res.json();
@@ -148,18 +167,3 @@ loadSampleBtn.addEventListener('click', async ()=>{
   }catch(e){ console.error(e); say('Could not load sample data.'); }
 });
 
-// Health test button
-const testBtn = document.getElementById('test-worker');
-testBtn?.addEventListener('click', async ()=>{
-  try {
-    const healthUrl = new URL('./health', WORKER_BASE).toString().replace('%3Furl%3D','');
-    const res = await fetch(healthUrl);
-    const txt = await res.text();
-    let payload; try { payload = JSON.parse(txt); } catch { payload = { nonJSON: txt.slice(0,120) }; }
-    console.log('Health response:', res.status, payload);
-    say(res.ok ? 'Worker health OK' : 'Worker health failed: ' + res.status);
-  } catch (e) {
-    console.error('Health fetch error:', e);
-    say('Health request failed (see console).');
-  }
-});
