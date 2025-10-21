@@ -157,12 +157,16 @@ body{
   color:var(--ink); border:1px solid var(--border); font-weight:700
 }
 
-/* Ingredient highlights inside steps */
+/* Ingredient highlights: same size as text, theme blue */
 .ing-ref{
-  border:none;background:rgba(122,167,255,.18);padding:0 .35em;border-radius:8px;
-  cursor:pointer;color:inherit
+  all: unset;                /* remove button styling, keep text metrics */
+  color: var(--accent);      /* themed blue */
+  cursor: pointer;
 }
-.ing-ref:hover{background:rgba(122,167,255,.28)}
+.ing-ref:hover{
+  text-decoration: underline;
+}
+
 
 /* Popover */
 .popover{
