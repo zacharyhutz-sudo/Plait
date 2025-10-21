@@ -16,6 +16,27 @@ const messages = document.getElementById('messages');
 const stepsSection = document.getElementById('instructions');
 const stepsList = document.getElementById('steps-list');
 
+// --- Initialize safely ---
+(function ensureInit(){
+  function init() {
+    if (!form) {
+      console.error('Prept: #import-form not found — check index.html id="import-form".');
+      return;
+    }
+    if (!form.__preptBound) {
+      form.addEventListener('submit', onSubmit);
+      form.__preptBound = true;
+      console.log('Prept: submit handler bound.');
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+// Utility: show message
 function say(msg){
   messages.textContent = msg;
   setTimeout(()=>messages.textContent='', 5000);
@@ -45,6 +66,7 @@ function scaleLine(line, factor){
   return line.replace(match[1], scaled.toString());
 }
 
+// Render recipe from schema.org JSON
 function renderRecipe(schema){
   const name = schema.name || 'Untitled Recipe';
   const baseYield = parseInt(schema.recipeYield) || parseInt(schema.recipeServings) || 4;
@@ -78,6 +100,7 @@ function renderRecipe(schema){
   recipeSection.classList.remove('hidden');
 }
 
+// Build grocery list
 function buildGroceryList(){
   groceryList.innerHTML = '';
   const factor = (parseInt(servingsInput.value) || 1) / (getBaseServings() || 1);
@@ -105,6 +128,7 @@ window.addEventListener('load', ()=>{
 
 servingsInput.addEventListener('input', buildGroceryList);
 
+// Load sample
 loadSampleBtn.addEventListener('click', async ()=>{
   try{
     const res = await fetch('./sample-data/example-recipe.json');
@@ -117,11 +141,13 @@ loadSampleBtn.addEventListener('click', async ()=>{
   }
 });
 
-form.addEventListener('submit', async (e)=>{
+// --- Form Submit Handler ---
+async function onSubmit(e){
   e.preventDefault();
   const url = urlInput.value.trim();
   if(!url){ say('Enter a recipe URL.'); return; }
   if(!WORKER_BASE){ say('No backend configured.'); return; }
+
   try {
     window.__preptSetLoading?.(true);
     const res = await fetch(WORKER_BASE + encodeURIComponent(url));
@@ -152,4 +178,5 @@ form.addEventListener('submit', async (e)=>{
   } finally {
     window.__preptSetLoading?.(false);
   }
-});
+}
+
