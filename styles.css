@@ -82,7 +82,12 @@ body{
 .steps{counter-reset: step; list-style:none; padding-left:0; margin:0}
 .steps li{counter-increment: step; position:relative; padding-left:38px; margin:.35rem 0; line-height:1.45}
 .steps li::before{content: counter(step); position:absolute; left:0; top:0; width:26px; height:26px; border-radius:8px; display:grid; place-items:center; background:rgba(122,167,255,.15); color:var(--ink); border:1px solid var(--border); font-weight:700}
-.ing-ref{color: var(--accent); font-weight: 600;}
+.ing-ref {
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+.ing-ref:hover { text-decoration: underline; }
 .footer{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-bottom:28px}
 .footer a{color:var(--ink);opacity:.9}
 .muted{color:var(--muted)}
