@@ -1,4 +1,4 @@
-// Plait v0.4.7 — Ingredient checklist + smarter step splitting + Saved Recipes
+// Plait v0.4.8 — Open saved recipe from Saved page + checklist + step splitting
 const WORKER_BASE = "https://prept-parse.zacharyhutz.workers.dev/?url=";
 const STORAGE_KEY = "plait.savedRecipes";
 
@@ -35,19 +35,29 @@ let currentSourceUrl = null;
   function init() {
     if (!form) { console.error('Plait: #import-form not found.'); return; }
     if (!form.__plaitBound) { form.addEventListener('submit', onSubmit); form.__plaitBound = true; }
+
     copyBtn?.addEventListener('click', copyIngredients);
     servingsInput?.addEventListener('input', onServingsChange);
     stepsList?.addEventListener('click', onStepsClick);
+
+    // Ingredient checklist styling
     ingredientsList?.addEventListener('change', (e)=>{
       if (e.target && e.target.matches('input[type="checkbox"]')) {
         const li = e.target.closest('li');
         li?.classList.toggle('checked', e.target.checked);
       }
     });
+
+    // Saved: save button + render + open-on-click
     saveBtn?.addEventListener('click', onSaveRecipe);
     refreshSavedBtn?.addEventListener('click', renderSavedList);
+    savedList?.addEventListener('click', onSavedListClick);
+
+    // Sidebar nav
     navHome?.addEventListener('click', (e)=>{ e.preventDefault(); showHome(); });
     navSaved?.addEventListener('click', (e)=>{ e.preventDefault(); showSaved(); });
+
+    // Basic hash routing
     if (location.hash === '#/saved') showSaved(); else showHome();
     window.addEventListener('hashchange', ()=>{
       if (location.hash === '#/saved') showSaved(); else showHome();
@@ -58,6 +68,7 @@ let currentSourceUrl = null;
 
 function say(msg){ messages.textContent = msg; setTimeout(()=>messages.textContent='', 3500); }
 
+// ---------- parsing helpers ----------
 const UNIT_WORDS = [
   "teaspoon","teaspoons","tsp","tablespoon","tablespoons","tbsp",
   "cup","cups","ounce","ounces","oz","pound","pounds","lb","lbs",
@@ -79,7 +90,7 @@ const ACTION_VERBS = new Set([
   "marinate","mash","microwave","mix","peel","place","poach","pour","preheat",
   "press","reduce","roast","sauté","saute","season","sear","serve","set","sift",
   "simmer","slice","spoon","spread","sprinkle","stir","stir-fry","strain","toss",
-  "transfer","turn","warm","whisk","wipe","wrap"
+  "transfer","turn","warm","whisk","wipe","wrap","remove","top","zest","ladle","shred","cover","pull"
 ]);
 const LEADING_FILLERS = new Set(["then","next","now","and"]);
 
@@ -152,6 +163,7 @@ function normalizeKey(s){ return s.toLowerCase().replace(/[^a-z0-9\s]/g,' ').rep
 function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function htmlEscape(s){ return s.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 
+// ---------- step-splitting ----------
 function sentenceSplit(text){
   const parts = [];
   let last = 0;
@@ -182,7 +194,7 @@ function splitInstructionsArray(instructions){
   const arr = Array.isArray(instructions) ? instructions : [];
   const out = [];
   for (const item of arr) {
-    if (typeof item !== 'string') { continue; }
+    if (typeof item !== 'string') continue;
     const sentences = sentenceSplit(item);
     let bucket = [];
     for (const s of sentences) {
@@ -214,6 +226,9 @@ function renderRecipe(schema){
   const splitSteps = splitInstructionsArray(schema.recipeInstructions);
   renderSteps(splitSteps);
   recipeSection?.classList.remove('hidden');
+
+  // Scroll to the recipe on open
+  setTimeout(()=> recipeSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 }
 
 function renderIngredients(){
@@ -222,6 +237,7 @@ function renderIngredients(){
   parsedIngredients.forEach((obj, idx) => {
     const li = document.createElement('li');
     li.className = 'ingredient-item';
+
     let qtyStr = '';
     if(typeof obj.qty === 'number'){ 
       const scaled = obj.qty * factor;
@@ -229,14 +245,17 @@ function renderIngredients(){
     }
     const unitStr = obj.unit ? (' ' + obj.unit) : '';
     const textLine = [(qtyStr || '').trim(), unitStr.trim(), obj.name].filter(Boolean).join(' ').replace(/\s+/g,' ').trim() || obj.raw;
+
     const id = `ing-${idx}`;
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = id;
     checkbox.className = 'ing-check';
+
     const label = document.createElement('label');
     label.setAttribute('for', id);
     label.textContent = textLine;
+
     li.appendChild(checkbox);
     li.appendChild(label);
     li.setAttribute('data-key', obj.key);
@@ -292,7 +311,7 @@ function renderSteps(instructions){
   stepsSection.classList.toggle('hidden', stepsList.children.length === 0);
 }
 
-// ---------- interactions ----------
+// ---------- click on highlighted ingredient -> show amount in toast ----------
 function onStepsClick(e){
   const el = e.target.closest?.('.ing-ref');
   if(!el) return;
@@ -306,6 +325,7 @@ function onStepsClick(e){
   say(`${ing.name} — ${amount} ${unit}`.trim());
 }
 
+// Friendly fraction formatting (nearest 1/8)
 function formatAmount(n){
   const rounded = Math.round(n * 8) / 8;
   const whole = Math.floor(rounded + 1e-9);
@@ -325,6 +345,7 @@ function onSaveRecipe(){
   saved.push(entry);
   setSaved(saved);
   say('Saved!');
+  renderSavedList(); // keep saved page fresh
 }
 
 function serializeRecipe(schema, sourceUrl){
@@ -344,24 +365,60 @@ function getSaved(){
   catch { return []; }
 }
 function setSaved(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+// Render Saved list with clickable items
 function renderSavedList(){
   const saved = getSaved();
   savedList.innerHTML = '';
   if(!saved.length){ savedEmpty.style.display = 'block'; return; }
   savedEmpty.style.display = 'none';
+
   saved
     .sort((a,b)=> new Date(b.savedAt) - new Date(a.savedAt))
     .forEach(r => {
       const li = document.createElement('li');
-      const left = document.createElement('span');
-      left.textContent = r.name;
+      // left side: clickable name
+      const open = document.createElement('button');
+      open.className = 'saved-open';
+      open.type = 'button';
+      open.setAttribute('data-id', r.id);
+      open.textContent = r.name;
+
+      // right side: servings (muted)
       const right = document.createElement('span');
       right.className = 'muted';
       right.textContent = (r.servings ? `${r.servings} servings` : '');
-      li.appendChild(left);
+
+      li.appendChild(open);
       li.appendChild(right);
       savedList.appendChild(li);
     });
+}
+
+// Click handler for Saved list
+function onSavedListClick(e){
+  const btn = e.target.closest('.saved-open');
+  if(!btn) return;
+  const id = btn.getAttribute('data-id');
+  const saved = getSaved();
+  const rec = saved.find(r => r.id === id);
+  if(!rec) { say('Saved recipe not found.'); return; }
+  openSavedRecipe(rec);
+}
+
+// Open a saved recipe into the Import view
+function openSavedRecipe(rec){
+  // Rebuild a minimal schema-like object
+  const schema = {
+    "@type": "Recipe",
+    name: rec.name,
+    recipeYield: String(rec.servings || 4),
+    recipeIngredient: Array.isArray(rec.ingredients) ? rec.ingredients : [],
+    recipeInstructions: Array.isArray(rec.instructions) ? rec.instructions : []
+  };
+  currentSourceUrl = rec.sourceUrl || '';
+  renderRecipe(schema);
+  showHome();
 }
 
 // ---------- navigation ----------
@@ -401,11 +458,13 @@ async function onSubmit(e){
 
 function onServingsChange(){ renderIngredients(); }
 
+// Copy ingredients (uses current scaled list)
 async function copyIngredients(){
   const lines = [...ingredientsList.querySelectorAll('li')].map(li => li.textContent.trim());
   try{ await navigator.clipboard.writeText(lines.join('\n')); say('Ingredients copied!'); }catch{ say('Could not copy.'); }
 }
 
+// Sample loader
 loadSampleBtn?.addEventListener('click', async ()=>{
   try{
     const res = await fetch('./sample-data/example-recipe.json');
@@ -416,3 +475,4 @@ loadSampleBtn?.addEventListener('click', async ()=>{
     renderRecipe(node);
   }catch(e){ console.error(e); say('Could not load sample data.'); }
 });
+
