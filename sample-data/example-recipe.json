@@ -1,0 +1,24 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Creamy White Chicken Chili",
+  "recipeYield": "6",
+  "recipeIngredient": [
+    "2 tbsp olive oil",
+    "1 medium onion, diced",
+    "2 cloves garlic, minced",
+    "1 lb chicken breast, cooked and shredded",
+    "2 cans (15 oz) great northern beans, drained",
+    "1 cup chicken broth",
+    "1 cup canned green chiles",
+    "1 tsp ground cumin",
+    "1 tsp dried oregano",
+    "1/2 tsp chili powder",
+    "1/2 tsp salt",
+    "1/4 tsp black pepper",
+    "1/2 cup sour cream",
+    "1/2 cup shredded Monterey Jack cheese",
+    "Juice of 1 lime",
+    "Fresh cilantro, chopped (for serving)"
+  ]
+}
