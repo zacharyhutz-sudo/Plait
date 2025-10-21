@@ -1,31 +1,17 @@
 {
   "@context": "https://schema.org",
   "@type": "Recipe",
-  "name": "Creamy White Chicken Chili",
-  "recipeYield": "6",
+  "name": "Sample",
+  "recipeYield": "4",
   "recipeIngredient": [
-    "2 tbsp olive oil",
-    "1 medium onion, diced",
-    "2 cloves garlic, minced",
-    "1 lb chicken breast, cooked and shredded",
-    "2 cans (15 oz) great northern beans, drained",
-    "1 cup chicken broth",
-    "1 cup canned green chiles",
-    "1 tsp ground cumin",
-    "1 tsp dried oregano",
-    "1/2 tsp chili powder",
-    "1/2 tsp salt",
-    "1/4 tsp black pepper",
-    "1/2 cup sour cream",
-    "1/2 cup shredded Monterey Jack cheese",
-    "Juice of 1 lime",
-    "Fresh cilantro, chopped (for serving)"
+    "1 cup flour",
+    "2 large eggs",
+    "1/2 cup milk",
+    "2 tbsp olive oil"
   ],
   "recipeInstructions": [
-    "Heat oil in a pot over medium heat.",
-    "Saut\u00e9 onion until translucent; add garlic and cook 30 seconds.",
-    "Stir in chicken, beans, broth, chiles, and spices; simmer 15 minutes.",
-    "Off heat, stir in sour cream and cheese until melted.",
-    "Finish with lime juice; garnish with cilantro and serve."
+    "Preheat oven to 375F. Grease a pan with olive oil.",
+    "Whisk eggs, milk, and flour until smooth.",
+    "Pour into pan and bake until set."
   ]
 }
