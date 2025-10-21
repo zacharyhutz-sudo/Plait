@@ -1,7 +1,7 @@
 // Basic Prept logic: load sample or import via backend (optional).
 // If you set WORKER_BASE to your Cloudflare Worker endpoint, import will work.
 // Example: const WORKER_BASE = "https://prept.yourname.workers.dev/parse?url=";
-const WORKER_BASE = "";
+const WORKER_BASE = "https://prept-parse.zacharyhutz.workers.dev/?url=";
 
 const form = document.getElementById('import-form');
 const urlInput = document.getElementById('url');
