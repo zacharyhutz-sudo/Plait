@@ -114,13 +114,26 @@ form.addEventListener('submit', async (e)=>{
     say('No backend configured. Click "Load Sample" or set WORKER_BASE in app.js.');
     return;
   }
-  try{
+  try {
     const res = await fetch(WORKER_BASE + encodeURIComponent(url));
-    if(!res.ok) throw new Error('Fetch failed');
-    const payload = await res.json();
-    if(!payload || !payload.recipe) throw new Error('No recipe found');
+    const text = await res.text();
+    let payload;
+    try { payload = JSON.parse(text); } catch {
+      say('Worker returned non-JSON: ' + text.slice(0,120) + '…');
+      return;
+    }
+    if(!res.ok){
+      say(`Worker error ${res.status}: ${payload.error || 'Unknown error'}`);
+      return;
+    }
+    if(!payload || !payload.recipe){
+      say('No recipe found at that URL. Try a different site.');
+      return;
+    }
     renderRecipe(payload.recipe);
-  }catch(err){
-    console.error(err); say('Failed to import. Check the URL or backend.');
+  } catch (err) {
+    console.error(err);
+    say('Network error talking to the Worker.');
   }
 });
+
