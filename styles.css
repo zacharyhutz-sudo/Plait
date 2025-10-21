@@ -31,6 +31,33 @@ body{
   align-items:center;
   padding-top:24px;
 }
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 24px;
+  gap: 18px;
+}
+
+.left-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-text h1 {
+  font-family: Calistoga, Georgia, serif;
+  font-size: 28px;
+  line-height: 1;
+  margin: 0;
+}
+
 .left, .right { display:flex; align-items:center; }
 .icon-btn{
   border:1px solid var(--border);
@@ -43,11 +70,7 @@ body{
 }
 .icon-btn:hover{ box-shadow:var(--shadow); }
 .icon-btn:active{ transform: translateY(1px); }
-.brand.offcenter{
-  justify-self:center;
-  transform: translateX(-6%);
-  display:flex; align-items:center; gap:14px;
-}
+
 .logo{
   width:42px;height:42px;border-radius:12px;
   background:linear-gradient(135deg,var(--accent),var(--accent-2));
