@@ -1,6 +1,6 @@
-# Prept — Recipe Import + Grocery List (Starter)
+# Plait — Recipe Import + Grocery List (Starter)
 
-This is a beginner-friendly starter for **Prept**: paste a recipe link → extract ingredients (via Schema.org Recipe), scale servings, and build a grocery list.
+This is a beginner-friendly starter for **Plait**: paste a recipe link → extract ingredients (via Schema.org Recipe), scale servings, and build a grocery list.
 
 ## What's included
 - Vanilla **HTML/CSS/JS** (no framework) so it's easy to read and learn.
