@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Plait — Recipe Import</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,18 +16,19 @@
         <div class="logo">P</div>
         <div class="brand-text">
           <h1>Plait</h1>
-          <span class="tagline">Import recipes • Scale • Shop smarter</span>
+          <span class="tagline">Import recipes • Scale • Cook smarter</span>
         </div>
       </div>
       <nav class="nav">
         <a href="#" aria-disabled="true">Docs</a>
         <a href="#" aria-disabled="true">Changelog</a>
+        <button id="theme-toggle" class="btn ghost" style="margin-left:8px">Theme</button>
       </nav>
     </header>
 
     <section class="hero container">
       <h2 class="hero-title">Paste a recipe link. Get a <span class="accent">clean list</span>.</h2>
-      <p class="hero-sub">Modern, minimal recipe importer that turns any recipe into ingredients, steps, and a grocery list.</p>
+      <p class="hero-sub">Plait turns any recipe link into scaled ingredients and step-by-step highlights.</p>
 
       <form id="import-form" class="import">
         <label class="sr-only" for="url">Recipe URL</label>
@@ -48,13 +49,12 @@
       </form>
     </section>
 
-    <main class="container grid">
+    <main class="container grid-single">
       <section id="recipe" class="panel hidden">
         <div class="recipe-top">
-          <div>
+          <div class="title-row">
             <h3 id="recipe-title" class="recipe-title">—</h3>
-            <div class="chips">
-              <span class="chip">Imported</span>
+            <div class="chip-group">
               <span class="chip secondary" id="servings-chip">
                 <svg viewBox="0 0 24 24" class="chip-icon"><path d="M12 5v14M5 12h14" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round"/></svg>
                 <label for="servings">Servings</label>
@@ -64,26 +64,16 @@
           </div>
         </div>
 
-        <div class="cards">
-          <div class="card">
-            <div class="card-head">
-              <svg viewBox="0 0 24 24"><path d="M4 10h16M4 14h16M8 6h8M9 18h6" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
-              <h4>Ingredients</h4>
-            </div>
-            <ul id="ingredients-list" class="list"></ul>
+        <div class="card">
+          <div class="card-head">
+            <svg viewBox="0 0 24 24"><path d="M4 10h16M4 14h16M8 6h8M9 18h6" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <h4>Ingredients</h4>
+            <span style="flex:1"></span>
+            <button id="copy-ingredients" class="btn ghost" title="Copy Ingredients">Copy</button>
           </div>
-
-          <div class="card">
-            <div class="card-head">
-              <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
-              <h4>Grocery List</h4>
-            </div>
-            <ul id="grocery-list" class="list checklist"></ul>
-          </div>
+          <ul id="ingredients-list" class="list"></ul>
         </div>
-      </section>
 
-      <section id="instructions" class="panel hidden">
         <div class="card">
           <div class="card-head">
             <svg viewBox="0 0 24 24"><path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -95,14 +85,15 @@
     </main>
 
     <footer class="footer container">
-      <span class="muted">v0.2 • GitHub Pages • Cloudflare Worker</span>
+      <span class="muted">Plait v0.4 • GitHub Pages • Cloudflare Worker</span>
       <span class="muted"><a href="https://schema.org/Recipe" target="_blank" rel="noreferrer">Schema.org Recipe</a></span>
     </footer>
 
+    <div id="popover" class="popover hidden" role="dialog" aria-live="polite"></div>
     <div id="messages" class="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js"></script>
-  <script src="app-ui-patch.js"></script>
+  <script src="app.js?v=4"></script>
+  <script src="app-ui-patch.js?v=4"></script>
 </body>
 </html>
