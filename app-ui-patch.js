@@ -1,4 +1,4 @@
-// UI helpers (loading state) + theme toggle
+// Button loading state for Import
 (function setupUI(){
   const importBtn = document.getElementById('import-btn');
   function setLoading(on){
@@ -9,14 +9,28 @@
   window.__preptSetLoading = setLoading;
 })();
 
-(function themeToggle(){
-  const KEY = "plait-theme";
-  const btn = document.getElementById("theme-toggle");
-  const apply = (v) => { document.documentElement.dataset.theme = v || ""; localStorage.setItem(KEY, v || ""); };
-  const saved = localStorage.getItem(KEY) || ""; apply(saved);
-  btn?.addEventListener("click", () => {
-    const cur = document.documentElement.dataset.theme || "";
-    apply(cur === "" ? "light" : cur === "light" ? "dark" : "");
-    btn.blur();
-  });
+// Sidebar toggle (open/close/ESC/overlay)
+(function sidebar(){
+  const btn = document.getElementById('sidebar-toggle');
+  const close = document.getElementById('sidebar-close');
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+
+  const open = ()=>{
+    sidebar.classList.add('open');
+    backdrop.classList.add('show');
+    sidebar.setAttribute('aria-hidden','false');
+    backdrop.setAttribute('aria-hidden','false');
+  };
+  const hide = ()=>{
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('show');
+    sidebar.setAttribute('aria-hidden','true');
+    backdrop.setAttribute('aria-hidden','true');
+  };
+
+  btn?.addEventListener('click', open);
+  close?.addEventListener('click', hide);
+  backdrop?.addEventListener('click', hide);
+  window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') hide(); });
 })();
