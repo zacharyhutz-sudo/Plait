@@ -1,11 +1,11 @@
 // Basic Prept logic: load sample or import via backend (optional).
 // If you set WORKER_BASE to your Cloudflare Worker endpoint, import will work.
-// Example: const WORKER_BASE = "https://prept.yourname.workers.dev/parse?url=";
 const WORKER_BASE = "https://prept-parse.zacharyhutz.workers.dev/?url=";
 
 const form = document.getElementById('import-form');
 const urlInput = document.getElementById('url');
 const loadSampleBtn = document.getElementById('load-sample');
+
 const recipeSection = document.getElementById('recipe');
 const titleEl = document.getElementById('recipe-title');
 const ingredientsList = document.getElementById('ingredients-list');
@@ -13,8 +13,15 @@ const groceryList = document.getElementById('grocery-list');
 const servingsInput = document.getElementById('servings');
 const messages = document.getElementById('messages');
 
-// Utility: show message
-function say(msg){ messages.textContent = msg; setTimeout(()=>messages.textContent='', 5000); }
+// NEW: steps
+const stepsSection = document.getElementById('instructions');
+const stepsList = document.getElementById('steps-list');
+
+// Utility: show a temporary message
+function say(msg){
+  messages.textContent = msg;
+  setTimeout(()=>messages.textContent='', 5000);
+}
 
 // Scale a numeric quantity at start of ingredient line, e.g. "2 cups flour"
 function scaleLine(line, factor){
@@ -49,6 +56,7 @@ function renderRecipe(schema){
   titleEl.textContent = name;
   servingsInput.value = baseYield;
 
+  // INGREDIENTS
   const ings = Array.isArray(schema.recipeIngredient) ? schema.recipeIngredient : [];
   ingredientsList.innerHTML = '';
   ings.forEach(i => {
@@ -57,7 +65,21 @@ function renderRecipe(schema){
     ingredientsList.appendChild(li);
   });
 
-  // initial grocery list same as ingredients
+  // STEPS / INSTRUCTIONS (expects array of strings from Worker)
+  const instr = Array.isArray(schema.recipeInstructions) ? schema.recipeInstructions : [];
+  stepsList.innerHTML = '';
+  if (instr.length) {
+    instr.forEach(step => {
+      const li = document.createElement('li');
+      li.textContent = step;
+      stepsList.appendChild(li);
+    });
+    stepsSection.classList.remove('hidden');
+  } else {
+    stepsSection.classList.add('hidden');
+  }
+
+  // Build grocery list after ingredients are in the DOM
   buildGroceryList();
   recipeSection.classList.remove('hidden');
 }
@@ -68,6 +90,7 @@ function buildGroceryList(){
   const factor = (parseInt(servingsInput.value) || 1) / (getBaseServings() || 1);
   const lines = [...ingredientsList.querySelectorAll('li')].map(li => li.textContent);
   const scaled = lines.map(l => scaleLine(l, factor));
+
   // Group exact string matches
   const map = new Map();
   scaled.forEach(line => {
@@ -82,7 +105,6 @@ function buildGroceryList(){
 }
 
 function getBaseServings(){
-  // Stored in titleEl dataset? or infer from initial value captured once.
   return parseInt(servingsInput.getAttribute('data-base')) || parseInt(servingsInput.defaultValue) || 4;
 }
 
@@ -93,11 +115,11 @@ window.addEventListener('load', ()=>{
 
 servingsInput.addEventListener('input', buildGroceryList);
 
+// Load the local sample (no backend required)
 loadSampleBtn.addEventListener('click', async ()=>{
   try{
     const res = await fetch('./sample-data/example-recipe.json');
     const data = await res.json();
-    // Find a Recipe object
     const node = Array.isArray(data) ? data.find(d => d['@type']==='Recipe') : (data['@type']==='Recipe' ? data : null);
     if(!node){ say('Sample missing a Recipe object.'); return; }
     renderRecipe(node);
@@ -106,6 +128,7 @@ loadSampleBtn.addEventListener('click', async ()=>{
   }
 });
 
+// Import via Cloudflare Worker
 form.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const url = urlInput.value.trim();
@@ -117,11 +140,14 @@ form.addEventListener('submit', async (e)=>{
   try {
     const res = await fetch(WORKER_BASE + encodeURIComponent(url));
     const text = await res.text();
+
+    // Try to parse JSON for clearer error messages
     let payload;
     try { payload = JSON.parse(text); } catch {
       say('Worker returned non-JSON: ' + text.slice(0,120) + '…');
       return;
     }
+
     if(!res.ok){
       say(`Worker error ${res.status}: ${payload.error || 'Unknown error'}`);
       return;
