@@ -1,17 +1,18 @@
 {
   "@context": "https://schema.org",
   "@type": "Recipe",
-  "name": "Sample",
+  "name": "Sample Pancakes",
   "recipeYield": "4",
   "recipeIngredient": [
     "1 cup flour",
-    "2 large eggs",
-    "1/2 cup milk",
-    "2 tbsp olive oil"
+    "2 eggs",
+    "1 cup milk",
+    "2 tbsp sugar",
+    "1 tbsp butter"
   ],
   "recipeInstructions": [
-    "Preheat oven to 375F. Grease a pan with olive oil.",
-    "Whisk eggs, milk, and flour until smooth.",
-    "Pour into pan and bake until set."
+    "Whisk together flour, eggs, and milk.",
+    "Heat butter in a pan.",
+    "Pour batter and cook until golden."
   ]
 }
