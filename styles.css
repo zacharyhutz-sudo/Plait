@@ -34,7 +34,7 @@ body{
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding-top: 24px;
   gap: 18px;
 }
@@ -70,16 +70,6 @@ body{
 }
 .icon-btn:hover{ box-shadow:var(--shadow); }
 .icon-btn:active{ transform: translateY(1px); }
-.brand-text {
-  font-family: Calistoga, Georgia, serif;
-  font-size: 28px;
-  margin: 0;
-}
-.left-group {
-  display: flex;
-  align-items: center;
-  gap: 14px; /* keeps some space between hamburger and “Plait” */
-}
 
 .logo{
   width:42px;height:42px;border-radius:12px;
@@ -233,130 +223,36 @@ body{
 }
 
 
-/* Centered modal for ingredient amounts */
-.modal{
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(92vw, 420px);
-  max-width: 92vw;
-  background: var(--card);
-  color: var(--ink);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  z-index: 160;
-  padding: 16px 18px 18px 18px;
-}
-.modal.hidden{ display: none; }
-.modal-title{ margin: 0 0 8px 0; font-size: 18px; }
-.modal-body{ font-size: 16px; }
-.modal .close-btn{
-  position:absolute; right:10px; top:8px;
-  font-size:22px; line-height:1; width:32px; height:32px;
-  border-radius:8px;
-}
-.right-group{ display:flex; align-items:center; gap:12px; margin-left:auto; }
-
-/* Saved list spacing & actions */
-.saved-list{ padding-left: 0; }
-
-.saved-list li{
-  display:flex;
-  justify-content: space-between;
-  align-items:center;
-  gap: 12px;             /* spacing between name and right side */
-}
-
-.saved-list .saved-open{
-  flex: 1;
-  min-width: 0;          /* enables ellipsis */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.saved-right{ display:flex; align-items:center; gap: 12px; }
-.saved-right .muted{ flex-shrink: 0; }
-
-.saved-remove{
-  opacity: 0;
-  transition: opacity .15s ease;
-}
-.saved-list li:hover .saved-remove,
-.saved-remove:focus{ opacity: 1; }
-
 /* Steps: Focus (Cook) Mode */
 #instructions { position: relative; }
 
 .step-focus.hidden { display: none; }
 
 .step-focus{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  min-height: 160px;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  justify-items: center;
+  min-height: 180px;
   text-align: center;
   padding: 16px 44px; /* space for arrows */
   border-top: 1px solid var(--border);
+}
+
+.step-counter{
+  width: 100%;
+  text-align: center;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 8px;
 }
 
 .step-focus-body{
   max-width: 64ch;
   line-height: 1.6;
   font-size: 1.05rem;
-}
-
-.step-nav{
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--ink);
-  width: 36px; height: 36px;
-  border-radius: 999px;
-  box-shadow: var(--shadow);
-  display: grid; place-items: center;
-  font-size: 22px; line-height: 1;
-}
-
-.step-nav.prev { left: 8px; }
-.step-nav.next { right: 8px; }
-
-.step-nav:disabled {
-  opacity: .5;
-  pointer-events: none;
-}
-
-/* Keep ingredient highlight behavior inside focus mode too */
-.step-focus-body .ing-ref{
-  cursor: pointer;
-  border-bottom: 1px dashed currentColor;
-}
-
-/* Steps: Focus (Cook) Mode */
-#instructions { position: relative; }
-
-.step-focus.hidden { display: none; }
-
-.step-focus{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  min-height: 160px;
-  text-align: center;
-  padding: 16px 44px; /* space for arrows */
-  border-top: 1px solid var(--border);
-}
-
-.step-focus-body{
-  max-width: 64ch;
-  line-height: 1.6;
-  font-size: 1.05rem;
+  justify-self: center;
 }
 
 .step-nav{
@@ -378,16 +274,28 @@ body{
 
 .step-nav:disabled { opacity: .5; pointer-events: none; }
 
-/* Keep ingredient highlight behavior inside focus mode too */
-.step-focus-body .ing-ref{
-  cursor: pointer;
-  border-bottom: 1px dashed currentColor;
+.step-focus-body .ing-ref{ cursor: pointer; border-bottom: 1px dashed currentColor; }
+
+/* Centered modal for ingredient amounts */
+.modal{
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 420px);
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  z-index: 160;
+  padding: 16px 18px 18px 18px;
 }
-/* Step counter in Cook Mode */
-.step-counter{
-  width: 100%;
-  text-align: center;
-  font-weight: 600;
-  color: var(--muted);
-  margin-bottom: 8px;
+.modal.hidden{ display: none; }
+.modal-title{ margin: 0 0 8px 0; font-size: 18px; }
+.modal-body{ font-size: 16px; }
+.modal .close-btn{
+  position:absolute; right:10px; top:8px;
+  font-size:22px; line-height:1; width:32px; height:32px;
+  border-radius:8px;
 }

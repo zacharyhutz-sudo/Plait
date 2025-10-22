@@ -21,7 +21,7 @@ const stepsList = document.getElementById('steps-list');
 let isCookMode = false;
 let currentStepIndex = 0;
 
-// Elements for Cook Mode
+// Cook Mode elements
 const stepsToggleBtn = document.getElementById('steps-toggle');
 const stepFocus = document.getElementById('step-focus');
 const stepFocusBody = document.getElementById('step-focus-body');
@@ -52,37 +52,27 @@ let currentSourceUrl = null;
     servingsInput?.addEventListener('input', onServingsChange);
     stepsList?.addEventListener('click', onStepsClick);
 
-    // Steps: Cook Mode toggle + navigation
-  stepsToggleBtn?.addEventListener('click', toggleCookMode);
-  stepPrev?.addEventListener('click', ()=> stepGoto(currentStepIndex - 1));
-  stepNext?.addEventListener('click', ()=> stepGoto(currentStepIndex + 1));
-
-// Allow ingredient clicks inside focus body too
-  stepFocusBody?.addEventListener('click', onStepsClick);
-
-// Optional keyboard nav when in cook mode
-  window.addEventListener('keydown', (e)=>{
-    if(!isCookMode) return;
-    if(e.key === 'ArrowLeft') stepGoto(currentStepIndex - 1);
-    if(e.key === 'ArrowRight') stepGoto(currentStepIndex + 1);
-  });
-
     
-    // Ingredient checklist styling
+    // Cook Mode listeners
+    stepsToggleBtn?.addEventListener('click', toggleCookMode);
+    stepPrev?.addEventListener('click', ()=> stepGoto(currentStepIndex - 1));
+    stepNext?.addEventListener('click', ()=> stepGoto(currentStepIndex + 1));
+    stepFocusBody?.addEventListener('click', onStepsClick);
+
+    window.addEventListener('keydown', (e)=>{ if(isCookMode){ if(e.key==='ArrowLeft') stepGoto(currentStepIndex-1); if(e.key==='ArrowRight') stepGoto(currentStepIndex+1);} });
+// Ingredient checklist styling
     ingredientsList?.addEventListener('change', (e)=>{
       if (e.target && e.target.matches('input[type="checkbox"]')) {
         const li = e.target.closest('li');
         li?.classList.toggle('checked', e.target.checked);
       }
     });
-    
+
     // Saved: save button + render + open-on-click
     saveBtn?.addEventListener('click', onSaveRecipe);
     refreshSavedBtn?.addEventListener('click', renderSavedList);
     savedList?.addEventListener('click', onSavedListClick);
-    savedList?.addEventListener('click', onSavedListRemove);
 
-    
     // Sidebar nav
     navHome?.addEventListener('click', (e)=>{ e.preventDefault(); showHome(); });
     navSaved?.addEventListener('click', (e)=>{ e.preventDefault(); showSaved(); });
@@ -253,11 +243,9 @@ function renderRecipe(schema){
   parsedIngredients = ings.map(parseIngredient);
 
   renderIngredients();
-
-  // Reset Cook Mode to step 1 on a brand-new recipe
+  
   currentStepIndex = 0;
-
-  const splitSteps = splitInstructionsArray(schema.recipeInstructions);
+const splitSteps = splitInstructionsArray(schema.recipeInstructions);
   renderSteps(splitSteps);
   recipeSection?.classList.remove('hidden');
 
@@ -403,7 +391,6 @@ function getSaved(){
 function setSaved(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
 
 // Render Saved list with clickable items
-// Render Saved list with clickable items
 function renderSavedList(){
   const saved = getSaved();
   savedList.innerHTML = '';
@@ -414,51 +401,23 @@ function renderSavedList(){
     .sort((a,b)=> new Date(b.savedAt) - new Date(a.savedAt))
     .forEach(r => {
       const li = document.createElement('li');
-
       // left side: clickable name
-      const open = document.createElement('span');
-      open.className = 'saved-open';
-      open.setAttribute('data-id', r.id);
-      open.textContent = r.name;
+     const open = document.createElement('span');
+     open.className = 'saved-open';
+     open.setAttribute('data-id', r.id);
+     open.textContent = r.name;
 
-      // right side: servings + Remove action
-      const rightWrap = document.createElement('div');
-      rightWrap.className = 'saved-right';
 
-      const servings = document.createElement('span');
-      servings.className = 'muted';
-      servings.textContent = (r.servings ? `${r.servings} servings` : '');
-
-      const remove = document.createElement('button');
-      remove.className = 'btn ghost saved-remove';
-      remove.setAttribute('data-id', r.id);
-      remove.textContent = 'Remove'; // elegant text action
-
-      rightWrap.appendChild(servings);
-      rightWrap.appendChild(remove);
+      // right side: servings (muted)
+      const right = document.createElement('span');
+      right.className = 'muted';
+      right.textContent = (r.servings ? `${r.servings} servings` : '');
 
       li.appendChild(open);
-      li.appendChild(rightWrap);
+      li.appendChild(right);
       savedList.appendChild(li);
     });
 }
-
-// Click handler for "Remove" on Saved list
-function onSavedListRemove(e){
-  const btn = e.target.closest?.('.saved-remove');
-  if(!btn) return;
-  const id = btn.getAttribute('data-id');
-
-  const saved = getSaved();
-  const idx = saved.findIndex(r => r.id === id);
-  if(idx === -1){ say('Saved recipe not found.'); return; }
-
-  saved.splice(idx, 1);
-  setSaved(saved);
-  say('Removed from saved.');
-  renderSavedList();
-}
-
 
 // Click handler for Saved list
 function onSavedListClick(e){
@@ -542,6 +501,52 @@ loadSampleBtn?.addEventListener('click', async ()=>{
 });
 
 
+// ---------- Cook Mode (step-by-step) ----------
+function toggleCookMode(){
+  isCookMode = !isCookMode;
+  if(isCookMode){ currentStepIndex = Math.min(currentStepIndex, Math.max(0, stepsList.children.length - 1)); }
+  stepsToggleBtn.textContent = isCookMode ? 'List Mode' : 'Cook Mode';
+  updateStepsView();
+}
+
+function updateStepsView(){
+  if(!stepsList || !stepFocus || !stepFocusBody) return;
+  if(isCookMode){
+    stepsList.classList.add('hidden');
+    stepFocus.classList.remove('hidden');
+    renderStepFocus();
+  } else {
+    stepFocus.classList.add('hidden');
+    stepsList.classList.remove('hidden');
+  }
+}
+
+function renderStepFocus(){
+  const total = stepsList.children.length;
+  if(total === 0){
+    stepFocusBody.innerHTML = '';
+    if(stepCounter) stepCounter.textContent = '';
+    if(stepPrev) stepPrev.disabled = true;
+    if(stepNext) stepNext.disabled = true;
+    return;
+  }
+  if(currentStepIndex < 0) currentStepIndex = 0;
+  if(currentStepIndex > total - 1) currentStepIndex = total - 1;
+
+  if(stepCounter){ stepCounter.textContent = `Step ${currentStepIndex + 1} of ${total}`; }
+
+  const li = stepsList.children[currentStepIndex];
+  stepFocusBody.innerHTML = li.innerHTML;
+
+  if(stepPrev) stepPrev.disabled = (currentStepIndex === 0);
+  if(stepNext) stepNext.disabled = (currentStepIndex === total - 1);
+}
+
+function stepGoto(idx){
+  currentStepIndex = idx;
+  renderStepFocus();
+}
+
 // ---------- centered modal for ingredient amounts ----------
 const ingredientBackdrop = document.getElementById('ingredient-backdrop');
 const ingredientModal = document.getElementById('ingredient-modal');
@@ -554,7 +559,6 @@ function showIngredientModal(msg){
   ingredientModal.classList.remove('hidden');
   ingredientBackdrop.classList.add('show');
   ingredientBackdrop.setAttribute('aria-hidden','false');
-  // focus the close for accessibility
   ingredientModalClose?.focus?.();
 }
 function hideIngredientModal(){
@@ -562,68 +566,6 @@ function hideIngredientModal(){
   ingredientBackdrop?.classList.remove('show');
   ingredientBackdrop?.setAttribute('aria-hidden','true');
 }
-
 ingredientModalClose?.addEventListener('click', hideIngredientModal);
 ingredientBackdrop?.addEventListener('click', hideIngredientModal);
 window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') hideIngredientModal(); });
-
-function toggleCookMode(){
-  isCookMode = !isCookMode;
-  stepsToggleBtn.textContent = isCookMode ? 'List Mode' : 'Cook Mode';
-  updateStepsView();
-}
-
-function updateStepsView(){
-  if(!stepsList || !stepFocus || !stepFocusBody) return;
-
-  if(isCookMode){
-    // Enter focus mode
-    stepsList.classList.add('hidden');
-    stepFocus.classList.remove('hidden');
-
-    // If the current index is out of bounds (e.g. after re-render), reset to 0
-    const total = stepsList.children.length;
-    if(currentStepIndex < 0 || currentStepIndex >= total) currentStepIndex = 0;
-
-    renderStepFocus();
-  } else {
-    // Return to list mode
-    stepFocus.classList.add('hidden');
-    stepsList.classList.remove('hidden');
-  }
-}
-
-function renderStepFocus(){
-  const total = stepsList.children.length;
-  if(total === 0){
-    stepFocusBody.innerHTML = '';
-    if(stepCounter) stepCounter.textContent = '';
-    stepPrev.disabled = true;
-    stepNext.disabled = true;
-    return;
-  }
-
-  // Clamp index
-  if(currentStepIndex < 0) currentStepIndex = 0;
-  if(currentStepIndex > total - 1) currentStepIndex = total - 1;
-
-  // Counter text (X of N)
-  if(stepCounter){
-    stepCounter.textContent = `Step ${currentStepIndex + 1} of ${total}`;
-  }
-
-  // Copy HTML so ingredient refs remain clickable
-  const li = stepsList.children[currentStepIndex];
-  stepFocusBody.innerHTML = li.innerHTML;
-
-  // Enable/disable arrows
-  stepPrev.disabled = (currentStepIndex === 0);
-  stepNext.disabled = (currentStepIndex === total - 1);
-}
-
-
-function stepGoto(idx){
-  currentStepIndex = idx;
-  renderStepFocus();
-}
-
