@@ -254,17 +254,9 @@ function renderRecipe(schema){
 
   renderIngredients();
 
-// NEW: when a brand new recipe loads, go to step 1
+  // Reset Cook Mode to step 1 on a brand-new recipe
   currentStepIndex = 0;
 
-  const splitSteps = splitInstructionsArray(schema.recipeInstructions);
-  renderSteps(splitSteps);
-  recipeSection?.classList.remove('hidden');
-
-  // Scroll to the recipe on open
-  setTimeout(()=> recipeSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-}
-  
   const splitSteps = splitInstructionsArray(schema.recipeInstructions);
   renderSteps(splitSteps);
   recipeSection?.classList.remove('hidden');
