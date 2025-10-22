@@ -40,7 +40,7 @@ let currentSourceUrl = null;
 
 (function ensureInit(){
   function init() {
-    if (!form) { console.error('Plait: #import-form not found.'); return; }
+    if (!form) { console.warn('Plait: #import-form not found — proceeding with partial init.'); }
     if (!form.__plaitBound) { form.addEventListener('submit', onSubmit); form.__plaitBound = true; }
 
     copyBtn?.addEventListener('click', copyIngredients);
