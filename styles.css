@@ -258,3 +258,31 @@ body{
   border-radius:8px;
 }
 .right-group{ display:flex; align-items:center; gap:12px; margin-left:auto; }
+
+/* Saved list spacing & actions */
+.saved-list{ padding-left: 0; }
+
+.saved-list li{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  gap: 12px;             /* spacing between name and right side */
+}
+
+.saved-list .saved-open{
+  flex: 1;
+  min-width: 0;          /* enables ellipsis */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saved-right{ display:flex; align-items:center; gap: 12px; }
+.saved-right .muted{ flex-shrink: 0; }
+
+.saved-remove{
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.saved-list li:hover .saved-remove,
+.saved-remove:focus{ opacity: 1; }
