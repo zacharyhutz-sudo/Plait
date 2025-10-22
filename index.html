@@ -95,11 +95,21 @@
           </div>
 
           <div class="card" id="instructions">
-            <div class="card-head">
-              <svg viewBox="0 0 24 24"><path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
-              <h4>Steps</h4>
-            </div>
+           <div class="card-head">
+              <svg viewBox="0 0 24 24"><path d="M4 10h16M4 14h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <h4>Steps</h4>
+                  <span style="flex:1"></span>
+              <!-- Cook Mode toggle -->
+            <button id="steps-toggle" class="btn ghost" title="Toggle Cook Mode">Cook Mode</button>
+          </div>
+
             <ol id="steps-list" class="steps"></ol>
+                  <div id="step-focus" class="step-focus hidden" aria-live="polite">
+                  <button id="step-prev" class="step-nav prev" aria-label="Previous step">‹</button>
+                  <div id="step-focus-body" class="step-focus-body"></div>
+                  <button id="step-next" class="step-nav next" aria-label="Next step">›</button>
+          </div>
+
           </div>
         </section>
       </main>
