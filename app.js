@@ -822,3 +822,75 @@ function categorizeGroceries(items){
     get: () => isCookMode
   });
 })();
+
+/* === Cook Mode hotfix: wire #steps-toggle to overlay + read #steps-list === */
+(() => {
+  // 1) Include #steps-list li as a step source
+  const originalGetStepsFromDOM = window.__plaitGetStepsFromDOM;
+  function getStepsFromDOMPatched() {
+    const candidates = [
+      '#steps-list li',        // <-- your rendered steps
+      '#recipe-steps li',
+      '.recipe-steps li',
+      '[data-step]'
+    ];
+    for (const sel of candidates) {
+      const nodes = Array.from(document.querySelectorAll(sel));
+      const steps = nodes
+        .map(n => (n.getAttribute?.('data-step') ?? n.textContent ?? '').trim())
+        .filter(Boolean);
+      if (steps.length) return steps;
+    }
+    // fall back to any previous impl if defined
+    return typeof originalGetStepsFromDOM === 'function'
+      ? originalGetStepsFromDOM()
+      : [];
+  }
+
+  // Monkey-patch the overlay IIFE's getter if present; else expose ours
+  window.__plaitGetStepsFromDOM = getStepsFromDOMPatched;
+
+  // 2) Make #steps-toggle open the overlay cook mode
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('#steps-toggle');
+    if (!t) return;
+    e.preventDefault();
+
+    // If overlay enterCookMode exists, use it; otherwise fall back to old toggle
+    const overlayEnter = window.__plaitEnterCookMode || window.enterCookMode;
+    if (typeof overlayEnter === 'function') {
+      overlayEnter();  // open modal overlay Cook Mode
+    } else if (typeof window.toggleCookMode === 'function') {
+      // fallback: original inline mode
+      window.toggleCookMode();
+    }
+  }, true);
+
+  // Shim hooks used above so we can find overlay functions safely.
+  // Attach them if the overlay IIFE didn't already.
+  if (!window.__plaitEnterCookMode) {
+    // Try to detect overlay by its DOM id and key navigation
+    window.__plaitEnterCookMode = function () {
+      // Reuse the overlay IIFE's public API if it put one on window; else re-run its click path
+      const btn = document.querySelector('[data-action="cook-mode"], #btn-cook-mode, .btn-cook-mode');
+      if (btn) {
+        btn.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
+      } else {
+        // As a last resort, emulate what the overlay does:
+        const steps = window.__plaitGetStepsFromDOM ? window.__plaitGetStepsFromDOM() : [];
+        if (!steps.length) {
+          alert('No steps found for this recipe.');
+          return;
+        }
+        // Minimal boot: reuse overlay builder if present
+        const build = window.__plaitBuildCookUI || null;
+        if (build) {
+          build();
+        } else {
+          // If your build function isn't exposed, just trigger the existing listener again
+          document.dispatchEvent(new CustomEvent('plait:cookmode'));
+        }
+      }
+    };
+  }
+})();
