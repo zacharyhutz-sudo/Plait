@@ -21,13 +21,8 @@ const stepsList = document.getElementById('steps-list');
 let isCookMode = false;
 let currentStepIndex = 0;
 
-// Cook Mode elements
-const stepsToggleBtn = document.getElementById('steps-toggle');
-const stepFocus = document.getElementById('step-focus');
-const stepFocusBody = document.getElementById('step-focus-body');
-const stepPrev = document.getElementById('step-prev');
-const stepNext = document.getElementById('step-next');
-const stepCounter = document.getElementById('step-counter');
+// Cook Mode elements (assigned in init after DOM is ready)
+let stepsToggleBtn, stepFocus, stepFocusBody, stepPrev, stepNext, stepCounter;
 
 // Views & nav
 const viewHome = document.getElementById('view-home');
@@ -53,7 +48,15 @@ let currentSourceUrl = null;
     stepsList?.addEventListener('click', onStepsClick);
 
     
-    // Cook Mode listeners
+    // Cook Mode hookups: select elements now (DOM is ready)
+    stepsToggleBtn = document.getElementById('steps-toggle');
+    stepFocus = document.getElementById('step-focus');
+    stepFocusBody = document.getElementById('step-focus-body');
+    stepPrev = document.getElementById('step-prev');
+    stepNext = document.getElementById('step-next');
+    stepCounter = document.getElementById('step-counter');
+
+    // Listeners
     stepsToggleBtn?.addEventListener('click', toggleCookMode);
     stepPrev?.addEventListener('click', ()=> stepGoto(currentStepIndex - 1));
     stepNext?.addEventListener('click', ()=> stepGoto(currentStepIndex + 1));
