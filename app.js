@@ -383,16 +383,26 @@ function renderSavedList(){
      open.setAttribute('data-id', r.id);
      open.textContent = r.name;
 
+  // right side: servings + actions
+  const rightWrap = document.createElement('div');
+  rightWrap.className = 'saved-right';
 
-      // right side: servings (muted)
-      const right = document.createElement('span');
-      right.className = 'muted';
-      right.textContent = (r.servings ? `${r.servings} servings` : '');
+  const servings = document.createElement('span');
+  servings.className = 'muted';
+  servings.textContent = (r.servings ? `${r.servings} servings` : '');
 
-      li.appendChild(open);
-      li.appendChild(right);
-      savedList.appendChild(li);
-    });
+  const remove = document.createElement('button');
+  remove.className = 'btn ghost saved-remove';
+  remove.setAttribute('data-id', r.id);
+  remove.textContent = 'Remove'; // elegant text action instead of trash icon
+
+  rightWrap.appendChild(servings);
+  rightWrap.appendChild(remove);
+
+  li.appendChild(open);
+  li.appendChild(rightWrap);
+  savedList.appendChild(li);
+
 }
 
 // Click handler for Saved list
@@ -501,3 +511,18 @@ function hideIngredientModal(){
 ingredientModalClose?.addEventListener('click', hideIngredientModal);
 ingredientBackdrop?.addEventListener('click', hideIngredientModal);
 window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') hideIngredientModal(); });
+
+
+// Click handler for Remove on Saved list
+function onSavedListRemove(e){
+  const btn = e.target.closest?.('.saved-remove');
+  if(!btn) return;
+  const id = btn.getAttribute('data-id');
+  const saved = getSaved();
+  const idx = saved.findIndex(r => r.id === id);
+  if(idx === -1){ say('Saved recipe not found.'); return; }
+  saved.splice(idx,1);
+  setSaved(saved);
+  say('Removed from saved.');
+  renderSavedList();
+}
