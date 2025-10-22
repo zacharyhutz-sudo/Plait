@@ -383,3 +383,11 @@ body{
   cursor: pointer;
   border-bottom: 1px dashed currentColor;
 }
+/* Step counter in Cook Mode */
+.step-counter{
+  width: 100%;
+  text-align: center;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
