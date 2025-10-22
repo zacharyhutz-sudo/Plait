@@ -17,7 +17,7 @@ const saveBtn = document.getElementById('save-recipe');
 const stepsSection = document.getElementById('instructions');
 const stepsList = document.getElementById('steps-list');
 
-// Cook Mode state
+// Cook Mode state (legacy vars kept harmlessly)
 let isCookMode = false;
 let currentStepIndex = 0;
 
@@ -47,26 +47,10 @@ let currentSourceUrl = null;
     servingsInput?.addEventListener('input', onServingsChange);
     stepsList?.addEventListener('click', onStepsClick);
 
-    
-    
-    // Cook Mode fresh setup
+    // Cook Mode fresh setup (binds its own listeners)
     cookSetup();
-// Cook Mode hookups: select elements now (DOM is ready)
-    stepsToggleBtn = document.getElementById('steps-toggle');
-    stepFocus = document.getElementById('step-focus');
-    stepFocusBody = document.getElementById('step-focus-body');
-    stepPrev = document.getElementById('step-prev');
-    stepNext = document.getElementById('step-next');
-    stepCounter = document.getElementById('step-counter');
 
-    // Listeners
-    stepsToggleBtn?.addEventListener('click', toggleCookMode);
-    stepPrev?.addEventListener('click', ()=> stepGoto(currentStepIndex - 1));
-    stepNext?.addEventListener('click', ()=> stepGoto(currentStepIndex + 1));
-    stepFocusBody?.addEventListener('click', onStepsClick);
-
-    window.addEventListener('keydown', (e)=>{ if(isCookMode){ if(e.key==='ArrowLeft') stepGoto(currentStepIndex-1); if(e.key==='ArrowRight') stepGoto(currentStepIndex+1);} });
-// Ingredient checklist styling
+    // Ingredient checklist styling
     ingredientsList?.addEventListener('change', (e)=>{
       if (e.target && e.target.matches('input[type="checkbox"]')) {
         const li = e.target.closest('li');
@@ -84,12 +68,18 @@ let currentSourceUrl = null;
     navSaved?.addEventListener('click', (e)=>{ e.preventDefault(); showSaved(); });
 
     // Basic hash routing
-    if (location.hash === '#/saved') showSaved(); else if (location.hash === '#/groceries') showGroceries(); else showHome();
+    if (location.hash === '#/saved') showSaved();
+    else if (location.hash === '#/groceries') showGroceries();
+    else showHome();
+
     window.addEventListener('hashchange', ()=>{
-      if (location.hash === '#/saved') showSaved(); else if (location.hash === '#/groceries') showGroceries(); else showHome();
+      if (location.hash === '#/saved') showSaved();
+      else if (location.hash === '#/groceries') showGroceries();
+      else showHome();
     });
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 
 function say(msg){ messages.textContent = msg; setTimeout(()=>messages.textContent='', 3500); }
@@ -294,6 +284,7 @@ function getStepsFromDOM(){
   }
   return [];
 }
+
 function renderRecipe(schema){
   currentRecipeSchema = schema;
   const name = schema.name || 'Untitled Recipe';
@@ -306,11 +297,10 @@ function renderRecipe(schema){
   parsedIngredients = ings.map(parseIngredient);
 
   renderIngredients();
-  
-  
+
   currentStepIndex = 0;
-currentStepIndex = 0;
-let stepsArr = normalizeRecipeInstructions(schema.recipeInstructions);
+  currentStepIndex = 0;
+  let stepsArr = normalizeRecipeInstructions(schema.recipeInstructions);
   if(stepsArr.length===0){ stepsArr = getStepsFromDOM(); }
   const splitSteps = splitInstructionsArray(stepsArr);
   renderSteps(splitSteps);
@@ -401,9 +391,9 @@ function renderSteps(instructions){
   for(const li of items) stepsList.appendChild(li);
   stepsSection.classList.toggle('hidden', stepsList.children.length === 0);
 
-  
-  updateStepsView();
-updateStepsView();
+  // Refresh Cook Mode view after rebuilding steps
+  cookUpdateView();
+  cookUpdateView();
 }
 
 // ---------- click on highlighted ingredient -> show amount in toast ----------
@@ -473,11 +463,10 @@ function renderSavedList(){
     .forEach(r => {
       const li = document.createElement('li');
       // left side: clickable name
-     const open = document.createElement('span');
-     open.className = 'saved-open';
-     open.setAttribute('data-id', r.id);
-     open.textContent = r.name;
-
+      const open = document.createElement('span');
+      open.className = 'saved-open';
+      open.setAttribute('data-id', r.id);
+      open.textContent = r.name;
 
       // right side: servings (muted)
       const right = document.createElement('span');
@@ -572,41 +561,6 @@ loadSampleBtn?.addEventListener('click', async ()=>{
 });
 
 
-// ---------- Cook Mode (step-by-step) ----------
-isCookMode = !isCookMode;
-
-  // Update button label
-  if(stepsToggleBtn){ stepsToggleBtn.textContent = isCookMode ? 'List Mode' : 'Cook Mode'; }
-
-  // Show/Hide lists explicitly
-  if(isCookMode){
-    stepsList && stepsList.classList.add('hidden');
-    stepFocus && stepFocus.classList.remove('hidden');
-    renderStepFocus();
-  } else {
-    stepFocus && stepFocus.classList.add('hidden');
-    stepsList && stepsList.classList.remove('hidden');
-  }
-}
-
-else {
-    stepFocus.classList.add('hidden');
-    stepsList.classList.remove('hidden');
-  }
-}
-
-if(currentStepIndex < 0) currentStepIndex = 0;
-  if(currentStepIndex > total - 1) currentStepIndex = total - 1;
-
-  if(stepCounter){ stepCounter.textContent = `Step ${currentStepIndex + 1} of ${total}`; }
-
-  const li = stepsList.children[currentStepIndex];
-  stepFocusBody.innerHTML = li.innerHTML;
-
-  if(stepPrev) stepPrev.disabled = (currentStepIndex === 0);
-  if(stepNext) stepNext.disabled = (currentStepIndex === total - 1);
-}
-
 // ---------- centered modal for ingredient amounts ----------
 const ingredientBackdrop = document.getElementById('ingredient-backdrop');
 const ingredientModal = document.getElementById('ingredient-modal');
@@ -628,8 +582,8 @@ function hideIngredientModal(){
 }
 ingredientModalClose?.addEventListener('click', hideIngredientModal);
 ingredientBackdrop?.addEventListener('click', hideIngredientModal);
-// Delegated fallback for Cook Mode controls (robust to dynamic DOM)
-// Groceries
+
+// ---------- Groceries ----------
 const GROCERIES_KEY = 'plait.groceries';
 const navGroceries = document.getElementById('nav-groceries');
 const viewGroceries = document.getElementById('view-groceries');
@@ -716,106 +670,6 @@ function categorizeGroceries(items){
   return sections;
 }
 
-// ===== Fresh Cook Mode (from scratch) =====
-let __cm = {
-  active: false,
-  index: 0,
-  els: null,
-  keyHandler: null
-};
-
-function cmEls(){
-  if(__cm.els) return __cm.els;
-  __cm.els = {
-    stepsList: document.getElementById('steps-list'),
-    stepsToggle: document.getElementById('steps-toggle'),
-    stepFocus: document.getElementById('step-focus'),
-    stepFocusBody: document.getElementById('step-focus-body'),
-    stepPrev: document.getElementById('step-prev'),
-    stepNext: document.getElementById('step-next'),
-    stepCounter: document.getElementById('step-counter'),
-  };
-  return __cm.els;
-}
-
-// Get li nodes as an array
-function cmSteps(){
-  const { stepsList } = cmEls();
-  if(!stepsList) return [];
-  return Array.from(stepsList.children);
-}
-
-function cmRender(){
-  const { stepFocusBody, stepPrev, stepNext, stepCounter } = cmEls();
-  const steps = cmSteps();
-  const total = steps.length;
-  if(total === 0) return;
-
-  if(__cm.index < 0) __cm.index = 0;
-  if(__cm.index > total-1) __cm.index = total-1;
-
-  const li = steps[__cm.index];
-  if(stepFocusBody){ stepFocusBody.innerHTML = li.innerHTML; }
-  if(stepCounter){ stepCounter.textContent = `Step ${__cm.index+1} of ${total}`; }
-  if(stepPrev) stepPrev.disabled = (__cm.index === 0);
-  if(stepNext) stepNext.disabled = (__cm.index === total-1);
-}
-
-function cmEnter(){
-  const els = cmEls();
-  const steps = cmSteps();
-  if(steps.length === 0){ say('No steps found to show in Cook Mode.'); return; }
-  __cm.active = true;
-  __cm.index = 0;
-
-  els.stepsList?.classList.add('hidden');
-  els.stepFocus?.classList.remove('hidden');
-  if(els.stepsToggle) els.stepsToggle.textContent = 'List Mode';
-
-  cmRender();
-
-  // Key handler
-  __cm.keyHandler = (e)=>{
-    if(!__cm.active) return;
-    if(e.key === 'ArrowLeft'){ __cm.index--; cmRender(); }
-    else if(e.key === 'ArrowRight'){ __cm.index++; cmRender(); }
-    else if(e.key === 'Escape'){ cmExit(); }
-  };
-  window.addEventListener('keydown', __cm.keyHandler);
-}
-
-function cmExit(){
-  const els = cmEls();
-  __cm.active = false;
-  els.stepFocus?.classList.add('hidden');
-  els.stepsList?.classList.remove('hidden');
-  if(els.stepsToggle) els.stepsToggle.textContent = 'Cook Mode';
-  if(__cm.keyHandler){ window.removeEventListener('keydown', __cm.keyHandler); __cm.keyHandler = null; }
-}
-
-// (replaced by new Cook Mode module)
-// (replaced by new Cook Mode module)
-// Bind listeners once DOM is ready
-(function bindCookMode(){
-  const bind = ()=>{
-    const els = cmEls();
-    els.stepsToggle?.addEventListener('click', toggleCookMode);
-    els.stepPrev?.addEventListener('click', ()=> stepGoto(__cm.index - 1));
-    els.stepNext?.addEventListener('click', ()=> stepGoto(__cm.index + 1));
-    // Make clicks on highlighted ingredients still work in focus view
-    els.stepFocusBody?.addEventListener('click', onStepsClick);
-  };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
-  else bind();
-})();
-
-
-// (replaced by new Cook Mode module)
-
-
-// (replaced by new Cook Mode module)
-
-
 // ===== Cook Mode (from-scratch) =====
 let COOK = { on: false, index: 0 };
 
@@ -832,6 +686,8 @@ function cookSetup(){
   stepsToggleBtn && stepsToggleBtn.addEventListener('click', cookToggle);
   stepPrev && stepPrev.addEventListener('click', ()=> cookGoto(COOK.index - 1));
   stepNext && stepNext.addEventListener('click', ()=> cookGoto(COOK.index + 1));
+  // Make clicks on highlighted ingredients still work in focus view
+  stepFocusBody?.addEventListener('click', onStepsClick);
 
   // Keyboard arrows when Cook Mode on
   window.addEventListener('keydown', (e)=>{
@@ -886,4 +742,3 @@ function cookGoto(i){
   COOK.index = i;
   cookRender();
 }
-
