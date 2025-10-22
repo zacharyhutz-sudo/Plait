@@ -569,11 +569,32 @@ loadSampleBtn?.addEventListener('click', async ()=>{
 
 // ---------- Cook Mode (step-by-step) ----------
 function toggleCookMode(){
-  if(!stepsList || stepsList.children.length===0){ say('No steps found to show in Cook Mode.'); return; }
+  // Defensive: re-resolve elements in case DOM changed
+  stepsToggleBtn = document.getElementById('steps-toggle') || stepsToggleBtn;
+  stepFocus = document.getElementById('step-focus') || stepFocus;
+  stepFocusBody = document.getElementById('step-focus-body') || stepFocusBody;
+  stepPrev = document.getElementById('step-prev') || stepPrev;
+  stepNext = document.getElementById('step-next') || stepNext;
+  stepCounter = document.getElementById('step-counter') || stepCounter;
+
+  // Require at least one step
+  const hasSteps = !!(stepsList && stepsList.children && stepsList.children.length > 0);
+  if(!hasSteps){ say('No steps found to show in Cook Mode.'); return; }
+
   isCookMode = !isCookMode;
-  if(isCookMode){ currentStepIndex = Math.min(currentStepIndex, Math.max(0, stepsList.children.length - 1)); }
-  stepsToggleBtn.textContent = isCookMode ? 'List Mode' : 'Cook Mode';
-  updateStepsView();
+
+  // Update button label
+  if(stepsToggleBtn){ stepsToggleBtn.textContent = isCookMode ? 'List Mode' : 'Cook Mode'; }
+
+  // Show/Hide lists explicitly
+  if(isCookMode){
+    stepsList && stepsList.classList.add('hidden');
+    stepFocus && stepFocus.classList.remove('hidden');
+    renderStepFocus();
+  } else {
+    stepFocus && stepFocus.classList.add('hidden');
+    stepsList && stepsList.classList.remove('hidden');
+  }
 }
 
 function updateStepsView(){
