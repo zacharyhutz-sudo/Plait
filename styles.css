@@ -336,3 +336,50 @@ body{
   cursor: pointer;
   border-bottom: 1px dashed currentColor;
 }
+
+/* Steps: Focus (Cook) Mode */
+#instructions { position: relative; }
+
+.step-focus.hidden { display: none; }
+
+.step-focus{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 160px;
+  text-align: center;
+  padding: 16px 44px; /* space for arrows */
+  border-top: 1px solid var(--border);
+}
+
+.step-focus-body{
+  max-width: 64ch;
+  line-height: 1.6;
+  font-size: 1.05rem;
+}
+
+.step-nav{
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--ink);
+  width: 36px; height: 36px;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  display: grid; place-items: center;
+  font-size: 22px; line-height: 1;
+}
+
+.step-nav.prev { left: 8px; }
+.step-nav.next { right: 8px; }
+
+.step-nav:disabled { opacity: .5; pointer-events: none; }
+
+/* Keep ingredient highlight behavior inside focus mode too */
+.step-focus-body .ing-ref{
+  cursor: pointer;
+  border-bottom: 1px dashed currentColor;
+}
