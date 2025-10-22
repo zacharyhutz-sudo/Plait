@@ -234,6 +234,63 @@ function splitInstructionsArray(instructions){
 }
 
 // ---------- rendering ----------
+
+// Normalize various schema.org recipeInstructions shapes into a flat array of strings
+function normalizeRecipeInstructions(instructions){
+  const out = [];
+  if(!instructions) return out;
+
+  const pushLine = (s)=>{
+    if(typeof s === 'string'){
+      const t = s.replace(/\s+/g,' ').trim();
+      if(t) out.push(t);
+    }
+  };
+
+  const handle = (node)=>{
+    if(!node) return;
+    if(typeof node === 'string'){ pushLine(node); return; }
+    if(Array.isArray(node)){ node.forEach(handle); return; }
+
+    // Objects: HowToStep, HowToSection, with .text/.name/.itemListElement
+    if(typeof node === 'object'){
+      if(node['@type']==='HowToSection' && Array.isArray(node.itemListElement)){
+        node.itemListElement.forEach(handle);
+        return;
+      }
+      if(node['@type']==='HowToStep'){
+        pushLine(node.text || node.name || '');
+        if(Array.isArray(node.itemListElement)) node.itemListElement.forEach(handle);
+        return;
+      }
+      // Unknown object shape: try common fields
+      pushLine(node.text || node.name || node['@text'] || '');
+      if(Array.isArray(node.itemListElement)) node.itemListElement.forEach(handle);
+      return;
+    }
+  };
+
+  handle(instructions);
+  return out;
+}
+
+// Fallback: scrape steps from DOM if schema failed
+function getStepsFromDOM(){
+  const candidates = [
+    '#recipe-steps li',
+    '.recipe-steps li',
+    '[data-step]',
+    'ol.instructions li',
+    '.instructions li',
+    '.method li'
+  ];
+  for(const sel of candidates){
+    const els = Array.from(document.querySelectorAll(sel));
+    const texts = els.map(el => el.textContent?.trim()).filter(Boolean);
+    if(texts.length) return texts;
+  }
+  return [];
+}
 function renderRecipe(schema){
   currentRecipeSchema = schema;
   const name = schema.name || 'Untitled Recipe';
@@ -250,7 +307,9 @@ function renderRecipe(schema){
   
   currentStepIndex = 0;
 currentStepIndex = 0;
-const splitSteps = splitInstructionsArray(schema.recipeInstructions);
+let stepsArr = normalizeRecipeInstructions(schema.recipeInstructions);
+  if(stepsArr.length===0){ stepsArr = getStepsFromDOM(); }
+  const splitSteps = splitInstructionsArray(stepsArr);
   renderSteps(splitSteps);
   recipeSection?.classList.remove('hidden');
 
@@ -510,6 +569,7 @@ loadSampleBtn?.addEventListener('click', async ()=>{
 
 // ---------- Cook Mode (step-by-step) ----------
 function toggleCookMode(){
+  if(!stepsList || stepsList.children.length===0){ say('No steps found to show in Cook Mode.'); return; }
   isCookMode = !isCookMode;
   if(isCookMode){ currentStepIndex = Math.min(currentStepIndex, Math.max(0, stepsList.children.length - 1)); }
   stepsToggleBtn.textContent = isCookMode ? 'List Mode' : 'Cook Mode';
