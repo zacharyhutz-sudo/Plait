@@ -742,3 +742,17 @@ function cookGoto(i){
   COOK.index = i;
   cookRender();
 }
+
+
+// --- Sticky Glass Header scroll state ---
+(function toggleScrollHeader(){
+  const onScroll = () => {
+    try {
+      if (window.scrollY > 8) document.body.classList.add('scrolled');
+      else document.body.classList.remove('scrolled');
+    } catch(e){ /* no-op */ }
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  // initial state
+  onScroll();
+})();
