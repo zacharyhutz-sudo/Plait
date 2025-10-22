@@ -70,6 +70,16 @@ body{
 }
 .icon-btn:hover{ box-shadow:var(--shadow); }
 .icon-btn:active{ transform: translateY(1px); }
+.brand-text {
+  font-family: Calistoga, Georgia, serif;
+  font-size: 28px;
+  margin: 0;
+}
+.left-group {
+  display: flex;
+  align-items: center;
+  gap: 14px; /* keeps some space between hamburger and “Plait” */
+}
 
 .logo{
   width:42px;height:42px;border-radius:12px;
