@@ -17,6 +17,17 @@ const saveBtn = document.getElementById('save-recipe');
 const stepsSection = document.getElementById('instructions');
 const stepsList = document.getElementById('steps-list');
 
+// Cook Mode state
+let isCookMode = false;
+let currentStepIndex = 0;
+
+// Elements for Cook Mode
+const stepsToggleBtn = document.getElementById('steps-toggle');
+const stepFocus = document.getElementById('step-focus');
+const stepFocusBody = document.getElementById('step-focus-body');
+const stepPrev = document.getElementById('step-prev');
+const stepNext = document.getElementById('step-next');
+
 // Views & nav
 const viewHome = document.getElementById('view-home');
 const viewSaved = document.getElementById('view-saved');
@@ -40,6 +51,22 @@ let currentSourceUrl = null;
     servingsInput?.addEventListener('input', onServingsChange);
     stepsList?.addEventListener('click', onStepsClick);
 
+    // Steps: Cook Mode toggle + navigation
+  stepsToggleBtn?.addEventListener('click', toggleCookMode);
+  stepPrev?.addEventListener('click', ()=> stepGoto(currentStepIndex - 1));
+  stepNext?.addEventListener('click', ()=> stepGoto(currentStepIndex + 1));
+
+// Allow ingredient clicks inside focus body too
+  stepFocusBody?.addEventListener('click', onStepsClick);
+
+// Optional keyboard nav when in cook mode
+  window.addEventListener('keydown', (e)=>{
+    if(!isCookMode) return;
+    if(e.key === 'ArrowLeft') stepGoto(currentStepIndex - 1);
+    if(e.key === 'ArrowRight') stepGoto(currentStepIndex + 1);
+  });
+
+    
     // Ingredient checklist styling
     ingredientsList?.addEventListener('change', (e)=>{
       if (e.target && e.target.matches('input[type="checkbox"]')) {
@@ -47,14 +74,14 @@ let currentSourceUrl = null;
         li?.classList.toggle('checked', e.target.checked);
       }
     });
-
+    
     // Saved: save button + render + open-on-click
     saveBtn?.addEventListener('click', onSaveRecipe);
     refreshSavedBtn?.addEventListener('click', renderSavedList);
     savedList?.addEventListener('click', onSavedListClick);
     savedList?.addEventListener('click', onSavedListRemove);
 
-
+    
     // Sidebar nav
     navHome?.addEventListener('click', (e)=>{ e.preventDefault(); showHome(); });
     navSaved?.addEventListener('click', (e)=>{ e.preventDefault(); showSaved(); });
@@ -311,6 +338,8 @@ function renderSteps(instructions){
   }
   for(const li of items) stepsList.appendChild(li);
   stepsSection.classList.toggle('hidden', stepsList.children.length === 0);
+
+  updateStepsView();
 }
 
 // ---------- click on highlighted ingredient -> show amount in toast ----------
@@ -532,3 +561,52 @@ function hideIngredientModal(){
 ingredientModalClose?.addEventListener('click', hideIngredientModal);
 ingredientBackdrop?.addEventListener('click', hideIngredientModal);
 window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') hideIngredientModal(); });
+
+function toggleCookMode(){
+  isCookMode = !isCookMode;
+  stepsToggleBtn.textContent = isCookMode ? 'List Mode' : 'Cook Mode';
+  updateStepsView();
+}
+
+function updateStepsView(){
+  if(!stepsList || !stepFocus || !stepFocusBody) return;
+
+  if(isCookMode){
+    // Enter focus mode
+    stepsList.classList.add('hidden');
+    stepFocus.classList.remove('hidden');
+
+    // If the current index is out of bounds (e.g. after re-render), reset to 0
+    const total = stepsList.children.length;
+    if(currentStepIndex < 0 || currentStepIndex >= total) currentStepIndex = 0;
+
+    renderStepFocus();
+  } else {
+    // Return to list mode
+    stepFocus.classList.add('hidden');
+    stepsList.classList.remove('hidden');
+  }
+}
+
+function renderStepFocus(){
+  const total = stepsList.children.length;
+  if(total === 0){ stepFocusBody.innerHTML = ''; stepPrev.disabled = true; stepNext.disabled = true; return; }
+
+  // Clamp index
+  if(currentStepIndex < 0) currentStepIndex = 0;
+  if(currentStepIndex > total - 1) currentStepIndex = total - 1;
+
+  // Copy the HTML of the current list item so ingredient refs stay clickable
+  const li = stepsList.children[currentStepIndex];
+  stepFocusBody.innerHTML = li.innerHTML;
+
+  // Enable/disable arrows at ends
+  stepPrev.disabled = (currentStepIndex === 0);
+  stepNext.disabled = (currentStepIndex === total - 1);
+}
+
+function stepGoto(idx){
+  currentStepIndex = idx;
+  renderStepFocus();
+}
+
