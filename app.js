@@ -253,6 +253,18 @@ function renderRecipe(schema){
   parsedIngredients = ings.map(parseIngredient);
 
   renderIngredients();
+
+// NEW: when a brand new recipe loads, go to step 1
+  currentStepIndex = 0;
+
+  const splitSteps = splitInstructionsArray(schema.recipeInstructions);
+  renderSteps(splitSteps);
+  recipeSection?.classList.remove('hidden');
+
+  // Scroll to the recipe on open
+  setTimeout(()=> recipeSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+  
   const splitSteps = splitInstructionsArray(schema.recipeInstructions);
   renderSteps(splitSteps);
   recipeSection?.classList.remove('hidden');
@@ -591,20 +603,32 @@ function updateStepsView(){
 
 function renderStepFocus(){
   const total = stepsList.children.length;
-  if(total === 0){ stepFocusBody.innerHTML = ''; stepPrev.disabled = true; stepNext.disabled = true; return; }
+  if(total === 0){
+    stepFocusBody.innerHTML = '';
+    if(stepCounter) stepCounter.textContent = '';
+    stepPrev.disabled = true;
+    stepNext.disabled = true;
+    return;
+  }
 
   // Clamp index
   if(currentStepIndex < 0) currentStepIndex = 0;
   if(currentStepIndex > total - 1) currentStepIndex = total - 1;
 
-  // Copy the HTML of the current list item so ingredient refs stay clickable
+  // Counter text (X of N)
+  if(stepCounter){
+    stepCounter.textContent = `Step ${currentStepIndex + 1} of ${total}`;
+  }
+
+  // Copy HTML so ingredient refs remain clickable
   const li = stepsList.children[currentStepIndex];
   stepFocusBody.innerHTML = li.innerHTML;
 
-  // Enable/disable arrows at ends
+  // Enable/disable arrows
   stepPrev.disabled = (currentStepIndex === 0);
   stepNext.disabled = (currentStepIndex === total - 1);
 }
+
 
 function stepGoto(idx){
   currentStepIndex = idx;
