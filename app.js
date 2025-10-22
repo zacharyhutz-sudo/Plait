@@ -52,6 +52,8 @@ let currentSourceUrl = null;
     saveBtn?.addEventListener('click', onSaveRecipe);
     refreshSavedBtn?.addEventListener('click', renderSavedList);
     savedList?.addEventListener('click', onSavedListClick);
+    savedList?.addEventListener('click', onSavedListRemove);
+
 
     // Sidebar nav
     navHome?.addEventListener('click', (e)=>{ e.preventDefault(); showHome(); });
@@ -367,6 +369,7 @@ function getSaved(){
 function setSaved(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
 
 // Render Saved list with clickable items
+// Render Saved list with clickable items
 function renderSavedList(){
   const saved = getSaved();
   savedList.innerHTML = '';
@@ -377,23 +380,51 @@ function renderSavedList(){
     .sort((a,b)=> new Date(b.savedAt) - new Date(a.savedAt))
     .forEach(r => {
       const li = document.createElement('li');
+
       // left side: clickable name
-     const open = document.createElement('span');
-     open.className = 'saved-open';
-     open.setAttribute('data-id', r.id);
-     open.textContent = r.name;
+      const open = document.createElement('span');
+      open.className = 'saved-open';
+      open.setAttribute('data-id', r.id);
+      open.textContent = r.name;
 
+      // right side: servings + Remove action
+      const rightWrap = document.createElement('div');
+      rightWrap.className = 'saved-right';
 
-      // right side: servings (muted)
-      const right = document.createElement('span');
-      right.className = 'muted';
-      right.textContent = (r.servings ? `${r.servings} servings` : '');
+      const servings = document.createElement('span');
+      servings.className = 'muted';
+      servings.textContent = (r.servings ? `${r.servings} servings` : '');
+
+      const remove = document.createElement('button');
+      remove.className = 'btn ghost saved-remove';
+      remove.setAttribute('data-id', r.id);
+      remove.textContent = 'Remove'; // elegant text action
+
+      rightWrap.appendChild(servings);
+      rightWrap.appendChild(remove);
 
       li.appendChild(open);
-      li.appendChild(right);
+      li.appendChild(rightWrap);
       savedList.appendChild(li);
     });
 }
+
+// Click handler for "Remove" on Saved list
+function onSavedListRemove(e){
+  const btn = e.target.closest?.('.saved-remove');
+  if(!btn) return;
+  const id = btn.getAttribute('data-id');
+
+  const saved = getSaved();
+  const idx = saved.findIndex(r => r.id === id);
+  if(idx === -1){ say('Saved recipe not found.'); return; }
+
+  saved.splice(idx, 1);
+  setSaved(saved);
+  say('Removed from saved.');
+  renderSavedList();
+}
+
 
 // Click handler for Saved list
 function onSavedListClick(e){
