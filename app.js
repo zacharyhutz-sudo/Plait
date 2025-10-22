@@ -511,7 +511,10 @@ loadSampleBtn?.addEventListener('click', async ()=>{
 // ---------- Cook Mode (step-by-step) ----------
 function toggleCookMode(){
   isCookMode = !isCookMode;
-  if(isCookMode){ currentStepIndex = Math.min(currentStepIndex, Math.max(0, stepsList.children.length - 1)); }
+  if(isCookMode){ currentStepIndex = Math.max(0, Math.min(currentStepIndex, Math.max(0, stepsList.children.length - 1))); }
+  updateStepsView();
+  renderStepFocus();
+}
   stepsToggleBtn.textContent = isCookMode ? 'List Mode' : 'Cook Mode';
   updateStepsView();
 }
@@ -643,7 +646,7 @@ function renderGroceries(){
       const li = document.createElement('li'); li.className='gro-item' + (it.checked?' checked':'');
       const cb = document.createElement('input'); cb.type='checkbox'; cb.checked=!!it.checked;
       const id = 'g-'+Math.random().toString(36).slice(2,8); cb.id=id;
-      cb.addEventListener('change', ()=>{ it.checked = cb.checked; setGroceries(items); li.classList.toggle('checked', it.checked); });
+      cb.addEventListener('change', () => { it.checked = cb.checked; setGroceries(items); li.classList.toggle('checked', it.checked); });
       const label = document.createElement('label'); label.setAttribute('for', id); label.textContent = it.raw;
       li.appendChild(cb); li.appendChild(label); ul.appendChild(li);
     }
@@ -653,21 +656,26 @@ function renderGroceries(){
 
 function categorizeGroceries(items){
   const map = {
-    Produce: [/\b(apple|banana|orange|lemon|lime|cilantro|onion|garlic|tomato|pepper|jalape[ñn]o|lettuce|spinach|kale|carrot|potato|avocado|herb|basil|parsley|scallion|chive|cabbage|cucumber|zucchini|poblano|chile|chili)\b/i],
-    Meat: [/\b(chicken|beef|pork|steak|ground beef|sausage|bacon|turkey)\b/i],
-    Seafood: [/\b(shrimp|salmon|tuna|cod|tilapia|fish)\b/i],
-    Dairy: [/\b(milk|cream|butter|cheese|yogurt|sour cream|half[- ]and[- ]half|mozzarella|cheddar|parmesan|cream cheese)\b/i],
-    Bakery: [/\b(bread|bun|roll|bagel|tortilla|pita)\b/i],
-    Pantry: [/\b(flour|sugar|salt|pepper|cumin|paprika|chili powder|oil|olive oil|vinegar|broth|stock|pasta|rice|beans|salsa|spice|seasoning|baking|yeast|vanilla|canned|can)\b/i],
-    Frozen: [/\b(frozen|ice cream|peas|corn|fries)\b/i],
-    Beverages: [/\b(juice|soda|coffee|tea)\b/i],
-    Household: [/\b(paper towel|napkin|foil|wrap|soap|detergent)\b/i],
+    Produce: [/()(apple|banana|orange|lemon|lime|cilantro|onion|garlic|tomato|potato|pepper|jalapeno|avocado|herb|parsley|basil|mint|ginger|carrot|celery|lettuce|spinach|kale|broccoli|cauliflower|mushroom|scallion|green onion|chive|cabbage|cucumber|zucchini|poblano|chile|chili)()/i],
+    Meat: [/()(chicken|beef|pork|steak|ground beef|sausage|bacon|turkey)()/i],
+    Seafood: [/()(shrimp|salmon|tuna|cod|tilapia|fish)()/i],
+    Dairy: [/()(milk|cream|butter|cheese|yogurt|sour cream|half[- ]and[- ]half|mozzarella|cheddar|parmesan|cream cheese)()/i],
+    Bakery: [/()(bread|bun|roll|bagel|tortilla|pita)()/i],
+    Pantry: [/()(flour|sugar|salt|pepper|cumin|paprika|chili powder|powder|beans|rice|pasta|oil|olive oil|vinegar|broth|stock|tomato sauce|tomato paste|diced tomato|can|canned|salsa|spice|seasoning|baking|yeast|vanilla)()/i],
+    Frozen: [/()(frozen|ice cream|peas|corn|fries)()/i],
+    Beverages: [/()(juice|soda|coffee|tea)()/i],
+    Household: [/()(paper towel|napkin|foil|wrap|soap|detergent)()/i],
   };
   const sections = { Produce:[], Meat:[], Seafood:[], Dairy:[], Bakery:[], Pantry:[], Frozen:[], Beverages:[], Household:[], Other:[] };
   for(const it of items){
     let placed = false;
     for(const [sec, regs] of Object.entries(map)){
       if(regs.some(rx => rx.test(it.raw))){ sections[sec].push(it); placed = true; break; }
+    }
+    if(!placed) sections.Other.push(it);
+  }
+  return sections;
+}
     }
     if(!placed) sections.Other.push(it);
   }
@@ -683,6 +691,7 @@ function categorizeGroceries(items){
   function getStepsFromDOM() {
     // Find common step containers
     const candidates = [
+      '#steps-list li',
       '#recipe-steps li',
       '.recipe-steps li',
       '[data-step]'
@@ -821,76 +830,4 @@ function categorizeGroceries(items){
   Object.defineProperty(window, 'isCookMode', {
     get: () => isCookMode
   });
-})();
-
-/* === Cook Mode hotfix: wire #steps-toggle to overlay + read #steps-list === */
-(() => {
-  // 1) Include #steps-list li as a step source
-  const originalGetStepsFromDOM = window.__plaitGetStepsFromDOM;
-  function getStepsFromDOMPatched() {
-    const candidates = [
-      '#steps-list li',        // <-- your rendered steps
-      '#recipe-steps li',
-      '.recipe-steps li',
-      '[data-step]'
-    ];
-    for (const sel of candidates) {
-      const nodes = Array.from(document.querySelectorAll(sel));
-      const steps = nodes
-        .map(n => (n.getAttribute?.('data-step') ?? n.textContent ?? '').trim())
-        .filter(Boolean);
-      if (steps.length) return steps;
-    }
-    // fall back to any previous impl if defined
-    return typeof originalGetStepsFromDOM === 'function'
-      ? originalGetStepsFromDOM()
-      : [];
-  }
-
-  // Monkey-patch the overlay IIFE's getter if present; else expose ours
-  window.__plaitGetStepsFromDOM = getStepsFromDOMPatched;
-
-  // 2) Make #steps-toggle open the overlay cook mode
-  document.addEventListener('click', (e) => {
-    const t = e.target.closest('#steps-toggle');
-    if (!t) return;
-    e.preventDefault();
-
-    // If overlay enterCookMode exists, use it; otherwise fall back to old toggle
-    const overlayEnter = window.__plaitEnterCookMode || window.enterCookMode;
-    if (typeof overlayEnter === 'function') {
-      overlayEnter();  // open modal overlay Cook Mode
-    } else if (typeof window.toggleCookMode === 'function') {
-      // fallback: original inline mode
-      window.toggleCookMode();
-    }
-  }, true);
-
-  // Shim hooks used above so we can find overlay functions safely.
-  // Attach them if the overlay IIFE didn't already.
-  if (!window.__plaitEnterCookMode) {
-    // Try to detect overlay by its DOM id and key navigation
-    window.__plaitEnterCookMode = function () {
-      // Reuse the overlay IIFE's public API if it put one on window; else re-run its click path
-      const btn = document.querySelector('[data-action="cook-mode"], #btn-cook-mode, .btn-cook-mode');
-      if (btn) {
-        btn.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
-      } else {
-        // As a last resort, emulate what the overlay does:
-        const steps = window.__plaitGetStepsFromDOM ? window.__plaitGetStepsFromDOM() : [];
-        if (!steps.length) {
-          alert('No steps found for this recipe.');
-          return;
-        }
-        // Minimal boot: reuse overlay builder if present
-        const build = window.__plaitBuildCookUI || null;
-        if (build) {
-          build();
-        } else {
-          // If your build function isn't exposed, just trigger the existing listener again
-          document.dispatchEvent(new CustomEvent('plait:cookmode'));
-        }
-      }
-    };
-  }
 })();
