@@ -511,10 +511,7 @@ loadSampleBtn?.addEventListener('click', async ()=>{
 // ---------- Cook Mode (step-by-step) ----------
 function toggleCookMode(){
   isCookMode = !isCookMode;
-  if(isCookMode){ currentStepIndex = Math.max(0, Math.min(currentStepIndex, Math.max(0, stepsList.children.length - 1))); }
-  updateStepsView();
-  renderStepFocus();
-}
+  if(isCookMode){ currentStepIndex = Math.min(currentStepIndex, Math.max(0, stepsList.children.length - 1)); }
   stepsToggleBtn.textContent = isCookMode ? 'List Mode' : 'Cook Mode';
   updateStepsView();
 }
@@ -646,7 +643,7 @@ function renderGroceries(){
       const li = document.createElement('li'); li.className='gro-item' + (it.checked?' checked':'');
       const cb = document.createElement('input'); cb.type='checkbox'; cb.checked=!!it.checked;
       const id = 'g-'+Math.random().toString(36).slice(2,8); cb.id=id;
-      cb.addEventListener('change', () => { it.checked = cb.checked; setGroceries(items); li.classList.toggle('checked', it.checked); });
+      cb.addEventListener('change', ()=>{ it.checked = cb.checked; setGroceries(items); li.classList.toggle('checked', it.checked); });
       const label = document.createElement('label'); label.setAttribute('for', id); label.textContent = it.raw;
       li.appendChild(cb); li.appendChild(label); ul.appendChild(li);
     }
@@ -656,15 +653,15 @@ function renderGroceries(){
 
 function categorizeGroceries(items){
   const map = {
-    Produce: [/()(apple|banana|orange|lemon|lime|cilantro|onion|garlic|tomato|potato|pepper|jalapeno|avocado|herb|parsley|basil|mint|ginger|carrot|celery|lettuce|spinach|kale|broccoli|cauliflower|mushroom|scallion|green onion|chive|cabbage|cucumber|zucchini|poblano|chile|chili)()/i],
-    Meat: [/()(chicken|beef|pork|steak|ground beef|sausage|bacon|turkey)()/i],
-    Seafood: [/()(shrimp|salmon|tuna|cod|tilapia|fish)()/i],
-    Dairy: [/()(milk|cream|butter|cheese|yogurt|sour cream|half[- ]and[- ]half|mozzarella|cheddar|parmesan|cream cheese)()/i],
-    Bakery: [/()(bread|bun|roll|bagel|tortilla|pita)()/i],
-    Pantry: [/()(flour|sugar|salt|pepper|cumin|paprika|chili powder|powder|beans|rice|pasta|oil|olive oil|vinegar|broth|stock|tomato sauce|tomato paste|diced tomato|can|canned|salsa|spice|seasoning|baking|yeast|vanilla)()/i],
-    Frozen: [/()(frozen|ice cream|peas|corn|fries)()/i],
-    Beverages: [/()(juice|soda|coffee|tea)()/i],
-    Household: [/()(paper towel|napkin|foil|wrap|soap|detergent)()/i],
+    Produce: [/\b(apple|banana|orange|lemon|lime|cilantro|onion|garlic|tomato|pepper|jalape[ñn]o|lettuce|spinach|kale|carrot|potato|avocado|herb|basil|parsley|scallion|chive|cabbage|cucumber|zucchini|poblano|chile|chili)\b/i],
+    Meat: [/\b(chicken|beef|pork|steak|ground beef|sausage|bacon|turkey)\b/i],
+    Seafood: [/\b(shrimp|salmon|tuna|cod|tilapia|fish)\b/i],
+    Dairy: [/\b(milk|cream|butter|cheese|yogurt|sour cream|half[- ]and[- ]half|mozzarella|cheddar|parmesan|cream cheese)\b/i],
+    Bakery: [/\b(bread|bun|roll|bagel|tortilla|pita)\b/i],
+    Pantry: [/\b(flour|sugar|salt|pepper|cumin|paprika|chili powder|oil|olive oil|vinegar|broth|stock|pasta|rice|beans|salsa|spice|seasoning|baking|yeast|vanilla|canned|can)\b/i],
+    Frozen: [/\b(frozen|ice cream|peas|corn|fries)\b/i],
+    Beverages: [/\b(juice|soda|coffee|tea)\b/i],
+    Household: [/\b(paper towel|napkin|foil|wrap|soap|detergent)\b/i],
   };
   const sections = { Produce:[], Meat:[], Seafood:[], Dairy:[], Bakery:[], Pantry:[], Frozen:[], Beverages:[], Household:[], Other:[] };
   for(const it of items){
@@ -676,158 +673,3 @@ function categorizeGroceries(items){
   }
   return sections;
 }
-    }
-    if(!placed) sections.Other.push(it);
-  }
-  return sections;
-}
-
-/* ===== Cook Mode — Robust Drop-in Patch ===== */
-(() => {
-  let isCookMode = false;
-  let currentStepIndex = 0;
-  let cookSteps = [];
-
-  function getStepsFromDOM() {
-    // Find common step containers
-    const candidates = [
-      '#steps-list li',
-      '#recipe-steps li',
-      '.recipe-steps li',
-      '[data-step]'
-    ];
-
-    for (const sel of candidates) {
-      const nodes = Array.from(document.querySelectorAll(sel));
-      const steps = nodes
-        .map(n => (n.getAttribute('data-step') ?? n.textContent ?? '').trim())
-        .filter(Boolean);
-      if (steps.length) return steps;
-    }
-    return [];
-  }
-
-  function buildCookUI() {
-    // Remove any previous UI
-    const old = document.getElementById('cook-overlay');
-    if (old) old.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'cook-overlay';
-    overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-modal', 'true');
-    overlay.style.position = 'fixed';
-    overlay.style.inset = '0';
-    overlay.style.background = 'rgba(0,0,0,0.6)';
-    overlay.style.zIndex = '9999';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.padding = '24px';
-
-    overlay.innerHTML = `
-      <div id="cook-modal" style="
-        background:#fff; width:min(900px, 100%); max-height:90vh; border-radius:16px;
-        box-shadow:0 10px 30px rgba(0,0,0,0.25); display:flex; flex-direction:column;
-      ">
-        <div style="display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid rgba(0,0,0,0.08)">
-          <strong style="font-size:18px">Cook Mode</strong>
-          <div style="flex:1"></div>
-          <button id="cook-exit" class="btn ghost" type="button" aria-label="Exit Cook Mode">Exit</button>
-        </div>
-
-        <div style="padding:24px; display:flex; flex-direction:column; gap:20px; overflow:auto;">
-          <div id="cook-step" style="font-size:22px; line-height:1.5"></div>
-          <div style="display:flex; align-items:center; gap:12px">
-            <button id="cook-prev" class="btn" type="button" aria-label="Previous step">‹ Prev</button>
-            <button id="cook-next" class="btn primary" type="button" aria-label="Next step">Next ›</button>
-            <div style="flex:1"></div>
-            <span id="cook-counter" class="muted" aria-live="polite"></span>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    // Wire buttons
-    overlay.querySelector('#cook-exit').addEventListener('click', exitCookMode);
-    overlay.querySelector('#cook-prev').addEventListener('click', () => stepGoto(currentStepIndex - 1));
-    overlay.querySelector('#cook-next').addEventListener('click', () => stepGoto(currentStepIndex + 1));
-  }
-
-  function stepGoto(i) {
-    if (!isCookMode || !cookSteps.length) return;
-
-    // clamp
-    if (i < 0) i = 0;
-    if (i > cookSteps.length - 1) i = cookSteps.length - 1;
-    currentStepIndex = i;
-
-    const stepEl = document.getElementById('cook-step');
-    const counter = document.getElementById('cook-counter');
-    const prevBtn = document.getElementById('cook-prev');
-    const nextBtn = document.getElementById('cook-next');
-
-    if (!stepEl) return;
-
-    stepEl.textContent = cookSteps[currentStepIndex];
-    counter.textContent = `Step ${currentStepIndex + 1} of ${cookSteps.length}`;
-
-    prevBtn.disabled = currentStepIndex === 0;
-    nextBtn.disabled = currentStepIndex === cookSteps.length - 1;
-  }
-
-  function enterCookMode() {
-    cookSteps = getStepsFromDOM();
-
-    if (!cookSteps.length) {
-      // If your steps exist in another structure, you can adapt getStepsFromDOM
-      alert('No steps found for this recipe.');
-      return;
-    }
-
-    isCookMode = true;
-    currentStepIndex = 0;
-    buildCookUI();
-    stepGoto(0);
-
-    // Keyboard navigation
-    window.addEventListener('keydown', keyNav, { capture: true });
-  }
-
-  function exitCookMode() {
-    isCookMode = false;
-    const overlay = document.getElementById('cook-overlay');
-    if (overlay) overlay.remove();
-    window.removeEventListener('keydown', keyNav, { capture: true });
-  }
-
-  function keyNav(e) {
-    if (!isCookMode) return;
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      exitCookMode();
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      stepGoto(currentStepIndex - 1);
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      stepGoto(currentStepIndex + 1);
-    }
-  }
-
-  // Event delegation: support buttons/links rendered dynamically
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action="cook-mode"], #btn-cook-mode, .btn-cook-mode');
-    if (btn) {
-      e.preventDefault();
-      enterCookMode();
-    }
-  });
-
-  // Optional: if your original code sets window.isCookMode or similar, keep it in sync
-  Object.defineProperty(window, 'isCookMode', {
-    get: () => isCookMode
-  });
-})();

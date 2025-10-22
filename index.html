@@ -1,91 +1,147 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Plait</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Plait — Recipe Import</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Calistoga&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <aside class="sidebar">
-    <nav>
-      <a id="nav-home" href="#/">Home</a>
-      <a id="nav-saved" href="#/saved">Saved</a>
-      <a id="nav-groceries" href="#/groceries">Groceries</a>
+  <!-- Sidebar + backdrop -->
+  <aside id="sidebar" class="sidebar" aria-hidden="true">
+    <div class="sidebar-head">
+      <div class="logo small">P</div>
+      <strong>Plait</strong>
+      <button id="sidebar-close" class="icon-btn" aria-label="Close menu">×</button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="sidebar-link" id="nav-home">Import</a>
+      <a href="#" class="sidebar-link" id="nav-saved">Saved Recipes</a>
+      <a href="#" class="sidebar-link" id="nav-groceries">Groceries</a>
+      <a href="https://schema.org/Recipe" class="sidebar-link" target="_blank" rel="noreferrer">Recipe schema</a>
     </nav>
+    <div class="sidebar-foot">
+      <small>© Plait</small>
+    </div>
   </aside>
+  <div id="sidebar-backdrop" class="backdrop" aria-hidden="true"></div>
 
-  <main>
-    <!-- Home -->
-    <section id="view-home" class="container">
-      <form id="import-form" class="panel">
-        <div class="title-row">
-          <h2>Import a recipe</h2>
-          <span style="flex:1"></span>
-          <button id="load-sample" type="button" class="btn ghost">Load sample</button>
-        </div>
-        <div class="row">
-          <input id="url" type="url" placeholder="Paste a recipe URL…">
-          <button type="submit" class="btn primary">Import</button>
-        </div>
-        <p id="messages" class="muted"></p>
-      </form>
+  <div class="page">
+   <header class="header container">
+  <div class="left-group">
+    <button id="sidebar-toggle" class="icon-btn" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      </svg>
+    </button>
+    <div class="brand">
+      <div class="logo">P</div>
+      <div class="brand-text">
+        <h1>Plait</h1>
+      </div>
+    </div>
+  </div>
+</header>
 
-      <section id="recipe" class="panel hidden">
-        <div class="title-row">
-          <h2 id="recipe-title"></h2>
-          <span style="flex:1"></span>
-          <button id="save-recipe" class="btn">Save</button>
-          <button id="add-to-groceries" class="btn ghost">Add to Groceries</button>
-        </div>
 
-        <div class="grid-2">
-          <div>
-            <div class="row" style="align-items:center; gap:12px">
-              <label for="servings">Servings:</label>
-              <input id="servings" type="number" min="1" value="4" style="width:80px">
-              <button id="copy-ingredients" class="btn ghost" type="button">Copy</button>
-            </div>
-            <ul id="ingredients-list" class="ingredients"></ul>
+    <!-- HOME / IMPORT -->
+    <section id="view-home">
+      <section class="hero container">
+        <h2 class="hero-title">Paste a recipe link. Get a <span class="accent">clean list</span>.</h2>
+
+        <form id="import-form" class="import">
+          <label class="sr-only" for="url">Recipe URL</label>
+          <div class="input-wrap">
+            <span class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M10.59 13.41a2 2 0 0 1 0-2.83l2.17-2.17a2 2 0 1 1 2.83 2.83l-.88.88" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            <input type="url" id="url" placeholder="https://example.com/your-favorite-recipe" required>
           </div>
+          <div class="actions">
+            <button type="submit" class="btn primary" id="import-btn">
+              <span class="btn-label">Import</span>
+              <span class="spinner" aria-hidden="true"></span>
+            </button>
+            <button type="button" id="load-sample" class="btn ghost">Load sample</button>
+          </div>
+          <small class="muted">Tip: Most sites include a “Recipe” schema we can read.</small>
+        </form>
+      </section>
 
-          <div id="instructions">
-            <div class="title-row" style="margin-bottom:8px">
-              <h3>Steps</h3>
-              <span style="flex:1"></span>
-              <button id="steps-toggle" class="btn">Cook Mode</button>
-            </div>
-            <ul id="steps-list" class="steps"></ul>
-
-            <!-- Inline Cook Mode focus area expected by app.js -->
-            <div id="step-focus" class="panel hidden">
-              <div id="step-focus-body" class="step-body"></div>
-              <div class="row" style="align-items:center; gap:12px; margin-top:12px">
-                <button id="step-prev" class="btn" type="button">‹ Prev</button>
-                <button id="step-next" class="btn primary" type="button">Next ›</button>
-                <span style="flex:1"></span>
-                <span id="step-counter" class="muted"></span>
+      <main class="container grid-single">
+        <section id="recipe" class="panel hidden">
+          <div class="recipe-top">
+            <div class="title-row">
+              <h3 id="recipe-title" class="recipe-title">—</h3>
+              <div class="chip-group">
+                <span class="chip secondary" id="servings-chip">
+                  <svg viewBox="0 0 24 24" class="chip-icon"><path d="M12 5v14M5 12h14" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <label for="servings">Servings</label>
+                  <input type="number" id="servings" min="1" step="1" value="4" inputmode="numeric">
+                </span>
+                <button id="save-recipe" class="btn ghost" title="Save this recipe">Save</button>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+
+          <div class="card">
+            <div class="card-head">
+              <svg viewBox="0 0 24 24"><path d="M4 10h16M4 14h16M8 6h8M9 18h6" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <h4>Ingredients</h4>
+              <span style="flex:1"></span>
+              <button id="copy-ingredients" class="btn ghost" title="Copy Ingredients">Copy</button>
+              <button id="add-to-groceries" class="btn ghost" title="Add ingredients to groceries" type="button">Add to Groceries</button>
+            </div>
+            <ul id="ingredients-list" class="list"></ul>
+          </div>
+
+        <div class="card" id="instructions">
+  <div class="card-head">
+    <svg viewBox="0 0 24 24"><path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <h4>Steps</h4>
+    <span style="flex:1"></span>
+    <button id="steps-toggle" class="btn ghost" title="Toggle Cook Mode" type="button">Cook Mode</button>
+  </div>
+
+  <!-- Your normal list mode -->
+  <ol id="steps-list" class="steps"></ol>
+
+  <!-- REQUIRED for Cook Mode -->
+  <div id="step-focus" class="step-focus hidden" aria-live="polite">
+    <button id="step-prev" class="step-nav prev" aria-label="Previous step" type="button">‹</button>
+    <div id="step-counter" class="step-counter"></div>
+    <div id="step-focus-body" class="step-focus-body"></div>
+    <button id="step-next" class="step-nav next" aria-label="Next step" type="button">›</button>
+  </div>
+</div>
+
+        </section>
+      </main>
     </section>
 
-    <!-- Saved -->
+    <!-- SAVED RECIPES PAGE -->
     <section id="view-saved" class="container hidden">
       <div class="panel">
-        <div class="title-row">
-          <h2>Saved recipes</h2>
-          <span style="flex:1"></span>
-          <button id="refresh-saved" class="btn ghost" type="button">Refresh</button>
+        <div class="title-row" style="margin-bottom:8px;">
+          <h3 class="recipe-title">Saved Recipes</h3>
+          <div class="chip-group">
+            <button id="refresh-saved" class="btn ghost">Refresh</button>
+          </div>
         </div>
-        <p id="saved-empty" class="muted">No saved recipes yet.</p>
-        <div id="saved-list" class="saved-list"></div>
+        <div class="card">
+          <div class="card-head">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <h4>Recipes</h4>
+          </div>
+          <ul id="saved-list" class="list saved-list"></ul>
+          <div id="saved-empty" class="muted" style="padding:8px 12px;">No saved recipes yet.</div>
+        </div>
       </div>
     </section>
-
-    <!-- Groceries -->
+    <!-- GROCERIES PAGE -->
     <section id="view-groceries" class="container hidden">
       <div class="panel">
         <div class="title-row">
@@ -97,15 +153,23 @@
         <div id="groceries-root" class="groceries"></div>
       </div>
     </section>
-  </main>
 
-  <!-- Ingredient modal placeholders (expected by app.js) -->
-  <div id="ingredient-backdrop" class="backdrop hidden"></div>
-  <div id="ingredient-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ingredient-title">
-    <button id="ingredient-modal-close" class="close" aria-label="Close">×</button>
-    <div id="ingredient-modal-body"></div>
+
+    <footer class="footer container">
+      <span class="muted">Plait • GitHub Pages • Cloudflare Worker</span>
+      <span class="muted"><a href="https://schema.org/Recipe" target="_blank" rel="noreferrer"> • Schema.org Recipe</a></span>
+    </footer>
+
+    <div id="messages" class="toast" role="status" aria-live="polite"></div>
+    <div id="ingredient-backdrop" class="backdrop" aria-hidden="true"></div>
+    <div id="ingredient-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ingredient-modal-title">
+      <button id="ingredient-modal-close" class="icon-btn close-btn" aria-label="Close popup">×</button>
+      <h3 id="ingredient-modal-title" class="modal-title">Ingredient</h3>
+      <div id="ingredient-modal-body" class="modal-body"></div>
+    </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=4.7"></script>
+  <script src="app-ui-patch.js?v=4.7"></script>
 </body>
 </html>
