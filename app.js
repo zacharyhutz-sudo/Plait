@@ -27,6 +27,7 @@ const stepFocus = document.getElementById('step-focus');
 const stepFocusBody = document.getElementById('step-focus-body');
 const stepPrev = document.getElementById('step-prev');
 const stepNext = document.getElementById('step-next');
+const stepCounter = document.getElementById('step-counter');
 
 // Views & nav
 const viewHome = document.getElementById('view-home');
