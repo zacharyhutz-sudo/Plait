@@ -34,7 +34,7 @@ body{
 .header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   padding-top: 24px;
   gap: 18px;
 }
@@ -221,3 +221,30 @@ body{
   padding-left: 18px;
   padding-right: 18px;
 }
+
+
+/* Centered modal for ingredient amounts */
+.modal{
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 420px);
+  max-width: 92vw;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  z-index: 160;
+  padding: 16px 18px 18px 18px;
+}
+.modal.hidden{ display: none; }
+.modal-title{ margin: 0 0 8px 0; font-size: 18px; }
+.modal-body{ font-size: 16px; }
+.modal .close-btn{
+  position:absolute; right:10px; top:8px;
+  font-size:22px; line-height:1; width:32px; height:32px;
+  border-radius:8px;
+}
+.right-group{ display:flex; align-items:center; gap:12px; margin-left:auto; }

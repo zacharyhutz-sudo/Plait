@@ -322,7 +322,7 @@ function onStepsClick(e){
   const qty = (typeof ing.qty === 'number') ? ing.qty * factor : null;
   const amount = (qty == null) ? '—' : formatAmount(qty);
   const unit = ing.unit || '(unit)';
-  say(`${ing.name} — ${amount} ${unit}`.trim());
+  showIngredientModal(`${ing.name} — ${amount} ${unit}`.trim());
 }
 
 // Friendly fraction formatting (nearest 1/8)
@@ -476,3 +476,28 @@ loadSampleBtn?.addEventListener('click', async ()=>{
   }catch(e){ console.error(e); say('Could not load sample data.'); }
 });
 
+
+// ---------- centered modal for ingredient amounts ----------
+const ingredientBackdrop = document.getElementById('ingredient-backdrop');
+const ingredientModal = document.getElementById('ingredient-modal');
+const ingredientModalClose = document.getElementById('ingredient-modal-close');
+const ingredientModalBody = document.getElementById('ingredient-modal-body');
+
+function showIngredientModal(msg){
+  if(!ingredientModal || !ingredientBackdrop) return;
+  ingredientModalBody.textContent = msg;
+  ingredientModal.classList.remove('hidden');
+  ingredientBackdrop.classList.add('show');
+  ingredientBackdrop.setAttribute('aria-hidden','false');
+  // focus the close for accessibility
+  ingredientModalClose?.focus?.();
+}
+function hideIngredientModal(){
+  ingredientModal?.classList.add('hidden');
+  ingredientBackdrop?.classList.remove('show');
+  ingredientBackdrop?.setAttribute('aria-hidden','true');
+}
+
+ingredientModalClose?.addEventListener('click', hideIngredientModal);
+ingredientBackdrop?.addEventListener('click', hideIngredientModal);
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') hideIngredientModal(); });

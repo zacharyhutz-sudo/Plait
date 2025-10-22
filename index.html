@@ -36,12 +36,10 @@
         <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
       </svg>
     </button>
+  </div>
+  <div class="right-group">
     <div class="brand">
       <div class="logo">P</div>
-      <div class="brand-text">
-        <h1>Plait</h1>
-      </div>
-    </div>
   </div>
 </header>
 
@@ -133,6 +131,14 @@
     </footer>
 
     <div id="messages" class="toast" role="status" aria-live="polite"></div>
+    <!-- Ingredient amount modal -->
+    <div id="ingredient-backdrop" class="backdrop" aria-hidden="true"></div>
+    <div id="ingredient-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ingredient-modal-title">
+      <button id="ingredient-modal-close" class="icon-btn close-btn" aria-label="Close popup">×</button>
+      <h3 id="ingredient-modal-title" class="modal-title">Ingredient</h3>
+      <div id="ingredient-modal-body" class="modal-body"></div>
+    </div>
+    
   </div>
 
   <script src="app.js?v=4.7"></script>
