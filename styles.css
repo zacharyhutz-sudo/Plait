@@ -338,36 +338,40 @@ body{
 .brand .brand-text + .logo { margin-left: 8px; }
 
 /* Footer link consistency */
-.site-footer,
-footer.site-footer {
-  color: #4b5563; /* neutral gray; tweak if needed */
+/* === Centered Footer === */
+.site-footer {
+  text-align: center;
+  padding: 1.25rem 0;
+  font-size: 0.9rem;
+  color: #4b5563;
+  border-top: 1px solid var(--border); /* subtle divider line */
+  margin-top: 3rem;
 }
 
-.site-footer a,
-footer.site-footer a {
-  color: inherit;                 /* same as surrounding text */
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer a {
+  color: inherit;
   text-decoration: underline;
   text-decoration-color: currentColor;
   text-underline-offset: 0.15em;
   text-decoration-thickness: from-font;
 }
 
-.site-footer a:visited,
-footer.site-footer a:visited {
-  color: inherit;                 /* kill purple visited color */
-  text-decoration-color: currentColor;
+.site-footer a:visited {
+  color: inherit;
 }
 
-.site-footer a:hover,
-footer.site-footer a:hover {
-  color: #111827;                 /* slightly darker on hover */
-  text-decoration-thickness: 2px; /* tasteful emphasis */
+.site-footer a:hover {
+  color: #111827;
+  text-decoration-thickness: 2px;
 }
 
-/* bullet separators */
-.site-footer .sep,
-footer.site-footer .sep {
+.site-footer .sep {
   margin: 0 0.5ch;
-  color: inherit;                 /* match text/link color */
+  color: inherit;
   user-select: none;
 }
+
