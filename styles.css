@@ -25,19 +25,8 @@ body{
 .container{max-width:1120px;margin:0 auto;padding:24px}
 .page{display:flex;flex-direction:column;min-height:100%}
 .hidden{display:none}
-.header{
-  display:grid;
-  grid-template-columns: 80px 1fr 80px;
-  align-items:center;
-  padding-top:24px;
-}
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 24px;
-  gap: 18px;
-}
+
+.header { display: flex; align-items: center; justify-content: flex-start; padding-top: 24px; gap: 18px; }
 
 .left-group {
   display: flex;
