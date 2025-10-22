@@ -81,9 +81,9 @@ let currentSourceUrl = null;
     navSaved?.addEventListener('click', (e)=>{ e.preventDefault(); showSaved(); });
 
     // Basic hash routing
-    if (location.hash === '#/saved') showSaved(); else showHome();
+    if (location.hash === '#/saved') showSaved(); else if (location.hash === '#/groceries') showGroceries(); else showHome();
     window.addEventListener('hashchange', ()=>{
-      if (location.hash === '#/saved') showSaved(); else showHome();
+      if (location.hash === '#/saved') showSaved(); else if (location.hash === '#/groceries') showGroceries(); else showHome();
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
@@ -247,7 +247,9 @@ function renderRecipe(schema){
 
   renderIngredients();
   
+  
   currentStepIndex = 0;
+currentStepIndex = 0;
 const splitSteps = splitInstructionsArray(schema.recipeInstructions);
   renderSteps(splitSteps);
   recipeSection?.classList.remove('hidden');
@@ -335,7 +337,9 @@ function renderSteps(instructions){
   for(const li of items) stepsList.appendChild(li);
   stepsSection.classList.toggle('hidden', stepsList.children.length === 0);
 
+  
   updateStepsView();
+updateStepsView();
 }
 
 // ---------- click on highlighted ingredient -> show amount in toast ----------
@@ -582,3 +586,90 @@ function __plaitCookDelegatedClick(e){
   else if (t.closest?.('#step-next')) { e.preventDefault(); stepGoto(currentStepIndex + 1); }
 }
 document.addEventListener('click', __plaitCookDelegatedClick);
+
+// Groceries
+const GROCERIES_KEY = 'plait.groceries';
+const navGroceries = document.getElementById('nav-groceries');
+const viewGroceries = document.getElementById('view-groceries');
+const groceriesRoot = document.getElementById('groceries-root');
+const groceriesEmpty = document.getElementById('groceries-empty');
+const addToGroceriesBtn = document.getElementById('add-to-groceries');
+const clearGroceriesBtn = document.getElementById('clear-groceries');
+
+navGroceries?.addEventListener('click', (e)=>{ e.preventDefault(); showGroceries(); });
+addToGroceriesBtn?.addEventListener('click', addCurrentIngredientsToGroceries);
+clearGroceriesBtn?.addEventListener('click', ()=>{ setGroceries([]); renderGroceries(); say('Cleared.'); });
+
+function getGroceries(){ try{ return JSON.parse(localStorage.getItem(GROCERIES_KEY)||'[]'); }catch{ return []; } }
+function setGroceries(arr){ localStorage.setItem(GROCERIES_KEY, JSON.stringify(arr)); }
+
+function showGroceries(){
+  viewHome.classList.add('hidden');
+  viewSaved.classList.add('hidden');
+  viewGroceries.classList.remove('hidden');
+  if(location.hash !== '#/groceries') history.replaceState(null,'','#/groceries');
+  renderGroceries();
+}
+
+function addCurrentIngredientsToGroceries(){
+  if(!parsedIngredients || !parsedIngredients.length){ say('No ingredients to add.'); return; }
+  const lines = parsedIngredients.map(obj => {
+    const qtyStr = (typeof obj.qty === 'number') ? obj.qty : '';
+    const unitStr = obj.unit || '';
+    const name = obj.name || obj.raw || '';
+    return { raw: [qtyStr, unitStr, name].filter(Boolean).join(' ').replace(/\s+/g,' ').trim(), name, unit: unitStr, qty: obj.qty || null, checked:false };
+  });
+  const existing = getGroceries();
+  for(const it of lines){
+    if(!existing.find(e => e.raw.toLowerCase() == it.raw.toLowerCase())) existing.push(it);
+  }
+  setGroceries(existing);
+  say('Added to Groceries.');
+}
+
+function renderGroceries(){
+  const items = getGroceries();
+  groceriesRoot.innerHTML = '';
+  if(!items.length){ groceriesEmpty.style.display='block'; return; }
+  groceriesEmpty.style.display='none';
+  const sections = categorizeGroceries(items);
+  const order = ['Produce','Meat','Seafood','Dairy','Bakery','Pantry','Frozen','Beverages','Household','Other'];
+  for(const name of order){
+    const arr = sections[name]||[]; if(!arr.length) continue;
+    const sec = document.createElement('div'); sec.className='gro-section';
+    const h = document.createElement('h4'); h.textContent = name; sec.appendChild(h);
+    const ul = document.createElement('ul'); ul.className='gro-list';
+    for(const it of arr){
+      const li = document.createElement('li'); li.className='gro-item' + (it.checked?' checked':'');
+      const cb = document.createElement('input'); cb.type='checkbox'; cb.checked=!!it.checked;
+      const id = 'g-'+Math.random().toString(36).slice(2,8); cb.id=id;
+      cb.addEventListener('change', ()=>{ it.checked = cb.checked; setGroceries(items); li.classList.toggle('checked', it.checked); });
+      const label = document.createElement('label'); label.setAttribute('for', id); label.textContent = it.raw;
+      li.appendChild(cb); li.appendChild(label); ul.appendChild(li);
+    }
+    sec.appendChild(ul); groceriesRoot.appendChild(sec);
+  }
+}
+
+function categorizeGroceries(items){
+  const map = {
+    Produce: [/\b(apple|banana|orange|lemon|lime|cilantro|onion|garlic|tomato|pepper|jalape[ñn]o|lettuce|spinach|kale|carrot|potato|avocado|herb|basil|parsley|scallion|chive|cabbage|cucumber|zucchini|poblano|chile|chili)\b/i],
+    Meat: [/\b(chicken|beef|pork|steak|ground beef|sausage|bacon|turkey)\b/i],
+    Seafood: [/\b(shrimp|salmon|tuna|cod|tilapia|fish)\b/i],
+    Dairy: [/\b(milk|cream|butter|cheese|yogurt|sour cream|half[- ]and[- ]half|mozzarella|cheddar|parmesan|cream cheese)\b/i],
+    Bakery: [/\b(bread|bun|roll|bagel|tortilla|pita)\b/i],
+    Pantry: [/\b(flour|sugar|salt|pepper|cumin|paprika|chili powder|oil|olive oil|vinegar|broth|stock|pasta|rice|beans|salsa|spice|seasoning|baking|yeast|vanilla|canned|can)\b/i],
+    Frozen: [/\b(frozen|ice cream|peas|corn|fries)\b/i],
+    Beverages: [/\b(juice|soda|coffee|tea)\b/i],
+    Household: [/\b(paper towel|napkin|foil|wrap|soap|detergent)\b/i],
+  };
+  const sections = { Produce:[], Meat:[], Seafood:[], Dairy:[], Bakery:[], Pantry:[], Frozen:[], Beverages:[], Household:[], Other:[] };
+  for(const it of items){
+    let placed = false;
+    for(const [sec, regs] of Object.entries(map)){
+      if(regs.some(rx => rx.test(it.raw))){ sections[sec].push(it); placed = true; break; }
+    }
+    if(!placed) sections.Other.push(it);
+  }
+  return sections;
+}

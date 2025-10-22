@@ -332,3 +332,11 @@ body{
 .step-nav:disabled { opacity: .5; pointer-events: none; }
 .step-focus-body .ing-ref{ cursor: pointer; border-bottom: 1px dashed currentColor; }
 
+
+/* Groceries */
+.groceries-root{ display:grid; gap:14px; }
+.gro-section{ border-top:1px dashed var(--border); padding-top:8px; }
+.gro-section h4{ margin:8px 0 6px 0; font-size:.95rem; color:var(--muted); }
+.gro-list{ list-style:none; margin:0; padding-left:0; }
+.gro-item{ display:grid; grid-template-columns:22px 1fr; align-items:start; gap:10px; margin:.25rem 0; }
+.gro-item.checked label{ color:var(--muted); text-decoration:line-through; }
