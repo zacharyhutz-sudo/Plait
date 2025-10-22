@@ -572,3 +572,13 @@ function hideIngredientModal(){
 ingredientModalClose?.addEventListener('click', hideIngredientModal);
 ingredientBackdrop?.addEventListener('click', hideIngredientModal);
 window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') hideIngredientModal(); });
+
+
+// Delegated fallback for Cook Mode controls (robust to dynamic DOM)
+function __plaitCookDelegatedClick(e){
+  const t = e.target;
+  if (t.closest?.('#steps-toggle')) { e.preventDefault(); toggleCookMode(); }
+  else if (t.closest?.('#step-prev')) { e.preventDefault(); stepGoto(currentStepIndex - 1); }
+  else if (t.closest?.('#step-next')) { e.preventDefault(); stepGoto(currentStepIndex + 1); }
+}
+document.addEventListener('click', __plaitCookDelegatedClick);
