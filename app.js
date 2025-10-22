@@ -48,7 +48,10 @@ let currentSourceUrl = null;
     stepsList?.addEventListener('click', onStepsClick);
 
     
-    // Cook Mode hookups: select elements now (DOM is ready)
+    
+    // Cook Mode fresh setup
+    cookSetup();
+// Cook Mode hookups: select elements now (DOM is ready)
     stepsToggleBtn = document.getElementById('steps-toggle');
     stepFocus = document.getElementById('step-focus');
     stepFocusBody = document.getElementById('step-focus-body');
@@ -311,6 +314,8 @@ let stepsArr = normalizeRecipeInstructions(schema.recipeInstructions);
   if(stepsArr.length===0){ stepsArr = getStepsFromDOM(); }
   const splitSteps = splitInstructionsArray(stepsArr);
   renderSteps(splitSteps);
+  COOK.index = 0;
+  cookUpdateView();
   recipeSection?.classList.remove('hidden');
 
   // Scroll to the recipe on open
@@ -568,20 +573,7 @@ loadSampleBtn?.addEventListener('click', async ()=>{
 
 
 // ---------- Cook Mode (step-by-step) ----------
-function toggleCookMode(){
-  // Defensive: re-resolve elements in case DOM changed
-  stepsToggleBtn = document.getElementById('steps-toggle') || stepsToggleBtn;
-  stepFocus = document.getElementById('step-focus') || stepFocus;
-  stepFocusBody = document.getElementById('step-focus-body') || stepFocusBody;
-  stepPrev = document.getElementById('step-prev') || stepPrev;
-  stepNext = document.getElementById('step-next') || stepNext;
-  stepCounter = document.getElementById('step-counter') || stepCounter;
-
-  // Require at least one step
-  const hasSteps = !!(stepsList && stepsList.children && stepsList.children.length > 0);
-  if(!hasSteps){ say('No steps found to show in Cook Mode.'); return; }
-
-  isCookMode = !isCookMode;
+isCookMode = !isCookMode;
 
   // Update button label
   if(stepsToggleBtn){ stepsToggleBtn.textContent = isCookMode ? 'List Mode' : 'Cook Mode'; }
@@ -597,28 +589,13 @@ function toggleCookMode(){
   }
 }
 
-function updateStepsView(){
-  if(!stepsList || !stepFocus || !stepFocusBody) return;
-  if(isCookMode){
-    stepsList.classList.add('hidden');
-    stepFocus.classList.remove('hidden');
-    renderStepFocus();
-  } else {
+else {
     stepFocus.classList.add('hidden');
     stepsList.classList.remove('hidden');
   }
 }
 
-function renderStepFocus(){
-  const total = stepsList.children.length;
-  if(total === 0){
-    stepFocusBody.innerHTML = '';
-    if(stepCounter) stepCounter.textContent = '';
-    if(stepPrev) stepPrev.disabled = true;
-    if(stepNext) stepNext.disabled = true;
-    return;
-  }
-  if(currentStepIndex < 0) currentStepIndex = 0;
+if(currentStepIndex < 0) currentStepIndex = 0;
   if(currentStepIndex > total - 1) currentStepIndex = total - 1;
 
   if(stepCounter){ stepCounter.textContent = `Step ${currentStepIndex + 1} of ${total}`; }
@@ -628,11 +605,6 @@ function renderStepFocus(){
 
   if(stepPrev) stepPrev.disabled = (currentStepIndex === 0);
   if(stepNext) stepNext.disabled = (currentStepIndex === total - 1);
-}
-
-function stepGoto(idx){
-  currentStepIndex = idx;
-  renderStepFocus();
 }
 
 // ---------- centered modal for ingredient amounts ----------
@@ -656,18 +628,7 @@ function hideIngredientModal(){
 }
 ingredientModalClose?.addEventListener('click', hideIngredientModal);
 ingredientBackdrop?.addEventListener('click', hideIngredientModal);
-window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') hideIngredientModal(); });
-
-
 // Delegated fallback for Cook Mode controls (robust to dynamic DOM)
-function __plaitCookDelegatedClick(e){
-  const t = e.target;
-  if (t.closest?.('#steps-toggle')) { e.preventDefault(); toggleCookMode(); }
-  else if (t.closest?.('#step-prev')) { e.preventDefault(); stepGoto(currentStepIndex - 1); }
-  else if (t.closest?.('#step-next')) { e.preventDefault(); stepGoto(currentStepIndex + 1); }
-}
-document.addEventListener('click', __plaitCookDelegatedClick);
-
 // Groceries
 const GROCERIES_KEY = 'plait.groceries';
 const navGroceries = document.getElementById('nav-groceries');
@@ -754,3 +715,175 @@ function categorizeGroceries(items){
   }
   return sections;
 }
+
+// ===== Fresh Cook Mode (from scratch) =====
+let __cm = {
+  active: false,
+  index: 0,
+  els: null,
+  keyHandler: null
+};
+
+function cmEls(){
+  if(__cm.els) return __cm.els;
+  __cm.els = {
+    stepsList: document.getElementById('steps-list'),
+    stepsToggle: document.getElementById('steps-toggle'),
+    stepFocus: document.getElementById('step-focus'),
+    stepFocusBody: document.getElementById('step-focus-body'),
+    stepPrev: document.getElementById('step-prev'),
+    stepNext: document.getElementById('step-next'),
+    stepCounter: document.getElementById('step-counter'),
+  };
+  return __cm.els;
+}
+
+// Get li nodes as an array
+function cmSteps(){
+  const { stepsList } = cmEls();
+  if(!stepsList) return [];
+  return Array.from(stepsList.children);
+}
+
+function cmRender(){
+  const { stepFocusBody, stepPrev, stepNext, stepCounter } = cmEls();
+  const steps = cmSteps();
+  const total = steps.length;
+  if(total === 0) return;
+
+  if(__cm.index < 0) __cm.index = 0;
+  if(__cm.index > total-1) __cm.index = total-1;
+
+  const li = steps[__cm.index];
+  if(stepFocusBody){ stepFocusBody.innerHTML = li.innerHTML; }
+  if(stepCounter){ stepCounter.textContent = `Step ${__cm.index+1} of ${total}`; }
+  if(stepPrev) stepPrev.disabled = (__cm.index === 0);
+  if(stepNext) stepNext.disabled = (__cm.index === total-1);
+}
+
+function cmEnter(){
+  const els = cmEls();
+  const steps = cmSteps();
+  if(steps.length === 0){ say('No steps found to show in Cook Mode.'); return; }
+  __cm.active = true;
+  __cm.index = 0;
+
+  els.stepsList?.classList.add('hidden');
+  els.stepFocus?.classList.remove('hidden');
+  if(els.stepsToggle) els.stepsToggle.textContent = 'List Mode';
+
+  cmRender();
+
+  // Key handler
+  __cm.keyHandler = (e)=>{
+    if(!__cm.active) return;
+    if(e.key === 'ArrowLeft'){ __cm.index--; cmRender(); }
+    else if(e.key === 'ArrowRight'){ __cm.index++; cmRender(); }
+    else if(e.key === 'Escape'){ cmExit(); }
+  };
+  window.addEventListener('keydown', __cm.keyHandler);
+}
+
+function cmExit(){
+  const els = cmEls();
+  __cm.active = false;
+  els.stepFocus?.classList.add('hidden');
+  els.stepsList?.classList.remove('hidden');
+  if(els.stepsToggle) els.stepsToggle.textContent = 'Cook Mode';
+  if(__cm.keyHandler){ window.removeEventListener('keydown', __cm.keyHandler); __cm.keyHandler = null; }
+}
+
+// (replaced by new Cook Mode module)
+// (replaced by new Cook Mode module)
+// Bind listeners once DOM is ready
+(function bindCookMode(){
+  const bind = ()=>{
+    const els = cmEls();
+    els.stepsToggle?.addEventListener('click', toggleCookMode);
+    els.stepPrev?.addEventListener('click', ()=> stepGoto(__cm.index - 1));
+    els.stepNext?.addEventListener('click', ()=> stepGoto(__cm.index + 1));
+    // Make clicks on highlighted ingredients still work in focus view
+    els.stepFocusBody?.addEventListener('click', onStepsClick);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})();
+
+
+// (replaced by new Cook Mode module)
+
+
+// (replaced by new Cook Mode module)
+
+
+// ===== Cook Mode (from-scratch) =====
+let COOK = { on: false, index: 0 };
+
+function cookSetup(){
+  // Resolve elements
+  stepsToggleBtn = document.getElementById('steps-toggle');
+  stepFocus = document.getElementById('step-focus');
+  stepFocusBody = document.getElementById('step-focus-body');
+  stepPrev = document.getElementById('step-prev');
+  stepNext = document.getElementById('step-next');
+  stepCounter = document.getElementById('step-counter');
+
+  // Clicks
+  stepsToggleBtn && stepsToggleBtn.addEventListener('click', cookToggle);
+  stepPrev && stepPrev.addEventListener('click', ()=> cookGoto(COOK.index - 1));
+  stepNext && stepNext.addEventListener('click', ()=> cookGoto(COOK.index + 1));
+
+  // Keyboard arrows when Cook Mode on
+  window.addEventListener('keydown', (e)=>{
+    if(!COOK.on) return;
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); cookGoto(COOK.index - 1); }
+    if(e.key === 'ArrowRight'){ e.preventDefault(); cookGoto(COOK.index + 1); }
+  });
+}
+
+function cookToggle(){
+  // Need steps
+  const count = stepsList?.children?.length || 0;
+  if(!count){ say('No steps found to show in Cook Mode.'); return; }
+
+  COOK.on = !COOK.on;
+  if(stepsToggleBtn) stepsToggleBtn.textContent = COOK.on ? 'List Mode' : 'Cook Mode';
+  cookUpdateView();
+}
+
+function cookUpdateView(){
+  const count = stepsList?.children?.length || 0;
+  if(!count){ 
+    // Hide focus elements if no steps
+    stepFocus && stepFocus.classList.add('hidden');
+    stepsList && stepsList.classList.remove('hidden');
+    return;
+  }
+  if(COOK.index < 0) COOK.index = 0;
+  if(COOK.index > count-1) COOK.index = count-1;
+
+  if(COOK.on){
+    stepsList && stepsList.classList.add('hidden');
+    stepFocus && stepFocus.classList.remove('hidden');
+    cookRender();
+  } else {
+    stepFocus && stepFocus.classList.add('hidden');
+    stepsList && stepsList.classList.remove('hidden');
+  }
+}
+
+function cookRender(){
+  const count = stepsList.children.length;
+  if(!count) return;
+  const li = stepsList.children[COOK.index];
+  if(stepCounter) stepCounter.textContent = `Step ${COOK.index + 1} of ${count}`;
+  if(stepFocusBody) stepFocusBody.innerHTML = li.innerHTML;
+  if(stepPrev) stepPrev.disabled = (COOK.index === 0);
+  if(stepNext) stepNext.disabled = (COOK.index === count - 1);
+}
+
+function cookGoto(i){
+  COOK.index = i;
+  cookRender();
+}
+
