@@ -292,8 +292,3 @@ body.scrolled .header-glass {
 
 /* Ensure main content pushes footer down in normal flow */
 .site-footer { position: static; }
-
-
-/* --- Patch: perfectly center hamburger icon in its bubble --- */
-.icon-btn svg{ display:block; margin:auto; }
-.icon-btn{ display:grid; place-items:center; padding:0; line-height:1; }

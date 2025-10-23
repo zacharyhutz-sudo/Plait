@@ -563,11 +563,65 @@ loadSampleBtn?.addEventListener('click', async ()=>{
 
 // ---------- centered modal for ingredient amounts ----------
 const ingredientBackdrop = document.getElementById('ingredient-backdrop');
+
+// ===== Robust Scroll Lock Utility =====
+;(() => {
+  const html = document.documentElement;
+  const body = document.body;
+  let _lockCount = 0;
+
+  function _applyLock(){
+    html.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'contain';
+    // Prevent iOS rubber-band while locked
+    body.style.position = body.style.position || '';
+  }
+  function _clearLock(){
+    html.style.overflow = '';
+    body.style.overscrollBehavior = '';
+  }
+
+  window.__ScrollLock = {
+    lock(){ if(_lockCount++ === 0) _applyLock(); },
+    unlock(){ if(_lockCount > 0 && --_lockCount === 0) _clearLock(); },
+    forceUnlock(){ _lockCount = 0; _clearLock(); },
+    get count(){ return _lockCount; }
+  };
+
+  // Safety nets: if page visibility changes or the modal node gets detached, ensure unlock
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'hidden'){ window.__ScrollLock.forceUnlock(); }
+  });
+
+  // Global safety: on route/view switches or clicks anywhere,
+  // if no visible modal/backdrop remains, clear any lingering lock.
+  document.addEventListener('click', () => {
+    const anyModalOpen = !!document.querySelector('#ingredient-modal:not(.hidden)');
+    const anyBackdrop = !!document.querySelector('#ingredient-backdrop.show');
+    if(!anyModalOpen && !anyBackdrop){ window.__ScrollLock.forceUnlock(); }
+  }, true);
+})();
+
 const ingredientModal = document.getElementById('ingredient-modal');
 const ingredientModalClose = document.getElementById('ingredient-modal-close');
 const ingredientModalBody = document.getElementById('ingredient-modal-body');
 
-function showIngredientModal(msg){
+// Observe modal visibility to auto-unlock if it becomes hidden by any code path
+try{
+  if(ingredientModal){
+    const obs = new MutationObserver(() => {
+      if(ingredientModal.classList.contains('hidden')){
+        ingredientBackdrop?.classList.remove('show');
+        ingredientBackdrop?.setAttribute('aria-hidden','true');
+        window.__ScrollLock?.unlock();
+      }
+    });
+    obs.observe(ingredientModal, { attributes: true, attributeFilter: ['class'] });
+  }
+}catch{}
+
+
+function showIngredientModal(msg){ window.__ScrollLock?.lock();
   if(!ingredientModal || !ingredientBackdrop) return;
   ingredientModalBody.textContent = msg;
   ingredientModal.classList.remove('hidden');
@@ -575,7 +629,7 @@ function showIngredientModal(msg){
   ingredientBackdrop.setAttribute('aria-hidden','false');
   ingredientModalClose?.focus?.();
 }
-function hideIngredientModal(){
+function hideIngredientModal(){ window.__ScrollLock?.unlock();
   ingredientModal?.classList.add('hidden');
   ingredientBackdrop?.classList.remove('show');
   ingredientBackdrop?.setAttribute('aria-hidden','true');
@@ -756,14 +810,3 @@ function cookGoto(i){
   // initial state
   onScroll();
 })();
-
-// Sidebar toggle (fallback)
-const sidebar = document.getElementById('sidebar');
-const sidebarToggle = document.getElementById('sidebar-toggle');
-const sidebarClose = document.getElementById('sidebar-close');
-function toggleSidebar(){
-  if(!sidebar) return;
-  sidebar.classList.toggle('open');
-}
-sidebarToggle?.addEventListener('click', toggleSidebar);
-sidebarClose?.addEventListener('click', ()=> sidebar?.classList.remove('open'));
