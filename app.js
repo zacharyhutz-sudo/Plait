@@ -41,6 +41,38 @@ function toggleSidebar(){
 sidebarToggle?.addEventListener('click', toggleSidebar);
 sidebarClose?.addEventListener('click', () => sidebar?.classList.remove('open'));
 
+
+// --- Reliable Sidebar Toggle (idempotent) ---
+(function(){
+  const sidebar = document.getElementById('sidebar');
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  const sidebarClose = document.getElementById('sidebar-close');
+  const sidebarBackdrop = document.getElementById('sidebar-backdrop'); // optional
+
+  if(!window.__bindSidebarToggleOnce){
+    function toggleSidebar(){
+      if(!sidebar) return;
+      sidebar.classList.toggle('open');
+      if(sidebarBackdrop){
+        if(sidebar.classList.contains('open')) sidebarBackdrop.classList.add('show');
+        else sidebarBackdrop.classList.remove('show');
+      }
+    }
+    function closeSidebar(){
+      if(!sidebar) return;
+      sidebar.classList.remove('open');
+      sidebarBackdrop?.classList.remove('show');
+    }
+    sidebarToggle?.addEventListener('click', toggleSidebar);
+    sidebarClose?.addEventListener('click', closeSidebar);
+    sidebarBackdrop?.addEventListener('click', closeSidebar);
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape' && sidebar?.classList.contains('open')) closeSidebar();
+    });
+    window.__bindSidebarToggleOnce = true;
+  }
+})();
+
 const navHome = document.getElementById('nav-home');
 const navSaved = document.getElementById('nav-saved');
 const refreshSavedBtn = document.getElementById('refresh-saved');
