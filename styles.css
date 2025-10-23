@@ -292,3 +292,68 @@ body.scrolled .header-glass {
 
 /* Ensure main content pushes footer down in normal flow */
 .site-footer { position: static; }
+
+/* --- Ingredient Centered Glass Modal (combined fix) --- */
+.modal{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 120;
+  max-width: min(560px, calc(100% - 40px));
+  background: var(--bg-elev);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 20px 20px 18px 20px;
+  color: var(--ink);
+}
+@keyframes modal-pop {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(.98); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.modal:not(.hidden){ animation: modal-pop .18s ease; }
+
+.modal-title{
+  font-size: 18px;
+  line-height: 1.2;
+  margin: 0 28px 10px 0;
+  font-weight: 600;
+}
+.modal-body{
+  font-size: 16px;
+  line-height: 1.6;
+}
+.icon-btn.close-btn{
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #ffffffbf;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.icon-btn.close-btn:hover{ transform: scale(1.06); box-shadow: 0 6px 18px rgba(2,6,23,.10); }
+.icon-btn.close-btn:active{ transform: scale(.98); }
+
+/* Ensure backdrop overlay */
+.backdrop{
+  position:fixed; inset:0; background: rgba(2,6,23,.32); opacity:0; pointer-events:none;
+  transition: opacity .2s ease; z-index:110;
+}
+.backdrop.show{ opacity:1; pointer-events:auto; }
+
+/* --- Patch: perfectly center hamburger icon in its bubble (combined fix) --- */
+.icon-btn svg{ display:block; margin:auto; }
+.icon-btn{ display:grid; place-items:center; padding:0; line-height:1; }
