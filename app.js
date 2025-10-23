@@ -583,42 +583,6 @@ function hideIngredientModal(){
 ingredientModalClose?.addEventListener('click', hideIngredientModal);
 ingredientBackdrop?.addEventListener('click', hideIngredientModal);
 
-
-// Accessibility & UX: lock scroll while modal open and close on ESC
-function _lockScroll(lock){
-  try{
-    if(lock){ document.documentElement.style.overflow = 'hidden'; }
-    else { document.documentElement.style.overflow = ''; }
-  }catch{}
-}
-const _escHandler = (e)=>{
-  if(e.key === 'Escape' && !ingredientModal?.classList.contains('hidden')){
-    hideIngredientModal();
-  }
-};
-
-// Patch show/hide to manage scroll + esc listener
-const _origShow = showIngredientModal;
-showIngredientModal = function(msg){
-  if(!ingredientModal || !ingredientBackdrop) return;
-  ingredientModalBody.textContent = msg;
-  ingredientModal.classList.remove('hidden');
-  ingredientBackdrop.classList.add('show');
-  ingredientBackdrop.setAttribute('aria-hidden','false');
-  _lockScroll(true);
-  document.addEventListener('keydown', _escHandler);
-  // focus the close button for accessibility
-  ingredientModalClose?.focus?.();
-};
-const _origHide = hideIngredientModal;
-hideIngredientModal = function(){
-  ingredientModal?.classList.add('hidden');
-  ingredientBackdrop?.classList.remove('show');
-  ingredientBackdrop?.setAttribute('aria-hidden','true');
-  _lockScroll(false);
-  document.removeEventListener('keydown', _escHandler);
-};
-
 // ---------- Groceries ----------
 const GROCERIES_KEY = 'plait.groceries';
 const navGroceries = document.getElementById('nav-groceries');
@@ -792,3 +756,14 @@ function cookGoto(i){
   // initial state
   onScroll();
 })();
+
+// Sidebar toggle (fallback)
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebarClose = document.getElementById('sidebar-close');
+function toggleSidebar(){
+  if(!sidebar) return;
+  sidebar.classList.toggle('open');
+}
+sidebarToggle?.addEventListener('click', toggleSidebar);
+sidebarClose?.addEventListener('click', ()=> sidebar?.classList.remove('open'));
