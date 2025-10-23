@@ -29,6 +29,18 @@ const viewHome = document.getElementById('view-home');
 const viewSaved = document.getElementById('view-saved');
 const savedList = document.getElementById('saved-list');
 const savedEmpty = document.getElementById('saved-empty');
+
+// Sidebar toggle (safety)
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebarClose = document.getElementById('sidebar-close');
+function toggleSidebar(){
+  if(!sidebar) return;
+  sidebar.classList.toggle('open');
+}
+sidebarToggle?.addEventListener('click', toggleSidebar);
+sidebarClose?.addEventListener('click', () => sidebar?.classList.remove('open'));
+
 const navHome = document.getElementById('nav-home');
 const navSaved = document.getElementById('nav-saved');
 const refreshSavedBtn = document.getElementById('refresh-saved');
@@ -563,6 +575,18 @@ loadSampleBtn?.addEventListener('click', async ()=>{
 
 // ---------- centered modal for ingredient amounts ----------
 const ingredientBackdrop = document.getElementById('ingredient-backdrop');
+
+// ===== Robust Scroll Lock Utility (safety) =====
+;(() => {
+  const html = document.documentElement, body = document.body;
+  let _lockCount = 0;
+  function _applyLock(){ html.style.overflow='hidden'; body.style.overscrollBehavior='contain'; }
+  function _clearLock(){ html.style.overflow=''; body.style.overscrollBehavior=''; }
+  window.__ScrollLock = { lock(){ if(_lockCount++===0) _applyLock(); }, unlock(){ if(_lockCount>0 && --_lockCount===0) _clearLock(); }, forceUnlock(){ _lockCount=0; _clearLock(); } };
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') window.__ScrollLock.forceUnlock(); });
+  document.addEventListener('click', ()=>{ const anyModalOpen=!!document.querySelector('#ingredient-modal:not(.hidden)'); const anyBackdrop=!!document.querySelector('#ingredient-backdrop.show'); if(!anyModalOpen && !anyBackdrop) window.__ScrollLock.forceUnlock(); }, true);
+})();
+
 const ingredientModal = document.getElementById('ingredient-modal');
 const ingredientModalClose = document.getElementById('ingredient-modal-close');
 const ingredientModalBody = document.getElementById('ingredient-modal-body');
@@ -573,12 +597,16 @@ function showIngredientModal(msg){
   ingredientModal.classList.remove('hidden');
   ingredientBackdrop.classList.add('show');
   ingredientBackdrop.setAttribute('aria-hidden','false');
+  window.__ScrollLock?.lock();
+  const _escHandler = (e)=>{ if(e.key==='Escape'){ hideIngredientModal(); } };
+  document.addEventListener('keydown', _escHandler, { once: true });
   ingredientModalClose?.focus?.();
 }
 function hideIngredientModal(){
   ingredientModal?.classList.add('hidden');
   ingredientBackdrop?.classList.remove('show');
   ingredientBackdrop?.setAttribute('aria-hidden','true');
+  window.__ScrollLock?.unlock();
 }
 ingredientModalClose?.addEventListener('click', hideIngredientModal);
 ingredientBackdrop?.addEventListener('click', hideIngredientModal);
@@ -635,9 +663,6 @@ const lines = parsedIngredients.map(obj => {
   for(const it of lines){
     if(!existing.find(e => e.raw.toLowerCase() == it.raw.toLowerCase())) existing.push(it);
   }
-  setGroceries(existing);
-  say('Added to Groceries.');
-}
 
 function renderGroceries(){
   const items = getGroceries();
