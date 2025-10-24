@@ -554,12 +554,14 @@ function showHome(){
   viewHome.classList.remove('hidden');
   viewSaved.classList.add('hidden');
   if (location.hash !== '' && location.hash !== '#/') history.replaceState(null,'','#/');
+  viewGroceries?.classList.add('hidden');
 }
 function showSaved(){
   viewHome.classList.add('hidden');
   viewSaved.classList.remove('hidden');
   if (location.hash !== '#/saved') history.replaceState(null,'','#/saved');
   renderSavedList();
+  viewGroceries?.classList.add('hidden');
 }
 
 // ---------- submit/import ----------
