@@ -1,4 +1,4 @@
-// Plait v0.4.8 — Open saved recipe from Saved page + checklist + step splitting
+// Plait v0.5.0 — Export to Notes feature
 const WORKER_BASE = "https://prept-parse.zacharyhutz.workers.dev/?url=";
 const STORAGE_KEY = "plait.savedRecipes";
 
@@ -13,6 +13,7 @@ const servingsInput = document.getElementById('servings');
 const messages = document.getElementById('messages');
 const copyBtn = document.getElementById('copy-ingredients');
 const saveBtn = document.getElementById('save-recipe');
+const exportRecipeBtn = document.getElementById('export-recipe');
 
 const stepsSection = document.getElementById('instructions');
 const stepsList = document.getElementById('steps-list');
@@ -104,6 +105,7 @@ let currentSourceUrl = null;
 
     // Saved: save button + render + open-on-click
     saveBtn?.addEventListener('click', onSaveRecipe);
+    exportRecipeBtn?.addEventListener('click', onExportRecipe);
     refreshSavedBtn?.addEventListener('click', renderSavedList);
     savedList?.addEventListener('click', onSavedListClick);
 
@@ -653,10 +655,12 @@ const groceriesRoot = document.getElementById('groceries-root');
 const groceriesEmpty = document.getElementById('groceries-empty');
 const addToGroceriesBtn = document.getElementById('add-to-groceries');
 const clearGroceriesBtn = document.getElementById('clear-groceries');
+const exportGroceriesBtn = document.getElementById('export-groceries');
 
 navGroceries?.addEventListener('click', (e)=>{ e.preventDefault(); showGroceries(); });
 addToGroceriesBtn?.addEventListener('click', addCurrentIngredientsToGroceries);
 clearGroceriesBtn?.addEventListener('click', ()=>{ setGroceries([]); renderGroceries(); say('Cleared.'); });
+exportGroceriesBtn?.addEventListener('click', onExportGroceries);
 
 function getGroceries(){ try{ return JSON.parse(localStorage.getItem(GROCERIES_KEY)||'[]'); }catch{ return []; } }
 function setGroceries(arr){ localStorage.setItem(GROCERIES_KEY, JSON.stringify(arr)); }
@@ -831,3 +835,83 @@ function cookGoto(i){
   // initial state
   onScroll();
 })();
+
+// ---------- Export to Notes ----------
+async function shareOrCopy(title, text){
+  // Try Web Share API first (works great on mobile, especially iOS)
+  if(navigator.share){
+    try {
+      await navigator.share({ title, text });
+      say('Shared!');
+      return;
+    } catch(e){
+      // User cancelled or share failed, fall back to clipboard
+      if(e.name === 'AbortError') return; // user cancelled
+    }
+  }
+  // Fallback: copy to clipboard
+  try {
+    await navigator.clipboard.writeText(text);
+    say('Copied to clipboard!');
+  } catch(e){
+    say('Could not share or copy.');
+  }
+}
+
+function onExportRecipe(){
+  if(!currentRecipeSchema){ say('Import a recipe first.'); return; }
+  
+  const title = currentRecipeSchema.name || 'Recipe';
+  const factor = (parseInt(servingsInput.value) || BASE_SERVINGS) / (BASE_SERVINGS || 1);
+  
+  // Build ingredients list
+  const ingredientLines = parsedIngredients.map(obj => {
+    let qtyStr = '';
+    if(typeof obj.qty === 'number'){
+      const scaled = obj.qty * factor;
+      qtyStr = formatAmount(scaled);
+    }
+    const unitStr = obj.unit ? (' ' + obj.unit) : '';
+    return `• ${[qtyStr.trim(), unitStr.trim(), obj.name].filter(Boolean).join(' ').trim() || obj.raw}`;
+  });
+  
+  // Build steps list
+  const stepEls = stepsList?.children || [];
+  const stepLines = [...stepEls].map((li, i) => `${i + 1}. ${li.textContent.trim()}`);
+  
+  // Compose the note
+  let note = `${title}\n`;
+  note += `Servings: ${servingsInput.value}\n\n`;
+  note += `INGREDIENTS\n${ingredientLines.join('\n')}\n\n`;
+  if(stepLines.length){
+    note += `STEPS\n${stepLines.join('\n')}\n`;
+  }
+  if(currentSourceUrl){
+    note += `\nSource: ${currentSourceUrl}`;
+  }
+  
+  shareOrCopy(title, note);
+}
+
+function onExportGroceries(){
+  const items = getGroceries();
+  if(!items.length){ say('Grocery list is empty.'); return; }
+  
+  // Group by category
+  const sections = categorizeGroceries(items);
+  const order = ['Produce','Meat','Seafood','Dairy','Bakery','Pantry','Frozen','Beverages','Household','Other'];
+  
+  let note = 'Grocery List\n\n';
+  for(const name of order){
+    const arr = sections[name] || [];
+    if(!arr.length) continue;
+    note += `${name.toUpperCase()}\n`;
+    for(const it of arr){
+      const check = it.checked ? '✓' : '○';
+      note += `${check} ${it.raw}\n`;
+    }
+    note += '\n';
+  }
+  
+  shareOrCopy('Grocery List', note.trim());
+}
