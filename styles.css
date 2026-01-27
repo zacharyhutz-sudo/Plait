@@ -364,6 +364,7 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  counter-reset: step-counter; /* SCOPE RESET TO THE LIST */
 }
 
 .steps li {
@@ -384,9 +385,10 @@ body::after {
   counter-increment: step-counter;
   position: absolute;
   left: 24px;
-  top: 24px;
-  width: 32px;
-  height: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
   background: var(--p-ink);
   color: white;
   border-radius: 10px;
@@ -517,6 +519,7 @@ body::after {
   .hero-title { line-height: 1; margin-bottom: 24px; }
   .card { padding: 24px; }
   .steps li { padding: 20px 20px 20px 60px; }
+  .steps li::before { left: 16px; }
   .step-nav { position: static; transform: none; margin: 20px 10px; width: 48px; height: 48px; }
   .step-focus { padding: 40px 20px; min-height: auto; }
 }
