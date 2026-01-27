@@ -364,7 +364,9 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  counter-reset: step-counter; /* SCOPE RESET TO THE LIST */
+  counter-reset: step-counter;
+  padding: 0;
+  margin: 0;
 }
 
 .steps li {
