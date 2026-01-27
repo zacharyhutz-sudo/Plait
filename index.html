@@ -10,9 +10,9 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Sidebar + backdrop -->
+  <!-- Sidebar Navigation -->
   <aside id="sidebar" class="sidebar" aria-hidden="true">
-    <div class="sidebar-head">ƒ
+    <div class="sidebar-head">
       <div class="logo small">P</div>
       <strong>Plait</strong>
       <button id="sidebar-close" class="icon-btn" aria-label="Close menu">×</button>
@@ -29,25 +29,26 @@
   <div id="sidebar-backdrop" class="backdrop" aria-hidden="true"></div>
 
   <div class="page">
-   <header class="header-glass header container">
-  <div class="left-group">
-    <button id="sidebar-toggle" class="icon-btn" aria-label="Open menu">
-      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-        <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-      </svg>
-    </button>
-  </div>
-  <div class="brand">
-  <div class="brand-text"><h1>Plait</h1></div>
-  <div class="logo">P</div>
-</div>
-</header>
+    <header class="header-glass">
+      <div class="header container">
+        <button id="sidebar-toggle" class="icon-btn" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <div class="brand" onclick="location.hash='#/'">
+          <div class="brand-text"><h1>Plait</h1></div>
+          <div class="logo">P</div>
+        </div>
+      </div>
+    </header>
 
-
-    <!-- HOME / IMPORT -->
+    <!-- HOME / IMPORT VIEW -->
     <section id="view-home">
       <section class="hero container">
-        <h2 class="hero-title">Paste a recipe link. Get a <span class="accent">clean list</span>.</h2>
+        <h2 class="hero-title">Your kitchen, <span class="accent">de-cluttered</span>.</h2>
 
         <form id="import-form" class="import">
           <label class="sr-only" for="url">Recipe URL</label>
@@ -68,92 +69,87 @@
         </form>
       </section>
 
-      <main class="container grid-single">
+      <main class="container">
         <section id="recipe" class="panel hidden">
           <div class="recipe-top">
             <div class="title-row">
               <h3 id="recipe-title" class="recipe-title">—</h3>
               <div class="chip-group">
-                <span class="chip secondary" id="servings-chip">
-                  <svg viewBox="0 0 24 24" class="chip-icon"><path d="M12 5v14M5 12h14" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span class="chip">
+                  <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 5v14M5 12h14" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round"/></svg>
                   <label for="servings">Servings</label>
-                  <input type="number" id="servings" min="1" step="1" value="4" inputmode="numeric">
+                  <input type="number" id="servings" min="1" step="1" value="4" inputmode="numeric" style="width: 40px; border: none; background: transparent; font: inherit; font-weight: 700; padding: 0; text-align: center; outline: none;">
                 </span>
-                <button id="save-recipe" class="btn ghost" title="Save this recipe">Save</button>
-                <button id="export-recipe" class="btn ghost" title="Export to Notes">Export</button>
+                <button id="save-recipe" class="btn ghost">Save</button>
+                <button id="export-recipe" class="btn ghost">Export</button>
               </div>
             </div>
           </div>
 
           <div class="card">
             <div class="card-head">
-              <svg viewBox="0 0 24 24"><path d="M4 10h16M4 14h16M8 6h8M9 18h6" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
               <h4>Ingredients</h4>
               <span style="flex:1"></span>
-              <button id="copy-ingredients" class="btn ghost" title="Copy Ingredients">Copy</button>
-              <button id="add-to-groceries" class="btn ghost" title="Add ingredients to groceries" type="button">Add to Groceries</button>
+              <button id="copy-ingredients" class="btn ghost">Copy</button>
+              <button id="add-to-groceries" class="btn ghost">Add to Groceries</button>
             </div>
             <ul id="ingredients-list" class="list"></ul>
           </div>
 
-        <div class="card" id="instructions">
-  <div class="card-head">
-    <svg viewBox="0 0 24 24"><path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
-    <h4>Steps</h4>
-    <span style="flex:1"></span>
-    <button id="steps-toggle" class="btn ghost" title="Toggle Cook Mode" type="button">Cook Mode</button>
-  </div>
+          <div class="card" id="instructions">
+            <div class="card-head">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+              <h4>Steps</h4>
+              <span style="flex:1"></span>
+              <button id="steps-toggle" class="btn ghost">Cook Mode</button>
+            </div>
 
-  <!-- Your normal list mode -->
-  <ol id="steps-list" class="steps"></ol>
+            <ol id="steps-list" class="steps"></ol>
 
-  <!-- REQUIRED for Cook Mode -->
-  <div id="step-focus" class="step-focus hidden" aria-live="polite">
-    <button id="step-prev" class="step-nav prev" aria-label="Previous step" type="button">‹</button>
-    <div id="step-counter" class="step-counter"></div>
-    <div id="step-focus-body" class="step-focus-body"></div>
-    <button id="step-next" class="step-nav next" aria-label="Next step" type="button">›</button>
-  </div>
-</div>
-
+            <div id="step-focus" class="step-focus hidden" aria-live="polite">
+              <button id="step-prev" class="step-nav prev" aria-label="Previous step">‹</button>
+              <div id="step-counter" class="step-counter"></div>
+              <div id="step-focus-body" class="step-focus-body"></div>
+              <button id="step-next" class="step-nav next" aria-label="Next step">›</button>
+            </div>
+          </div>
         </section>
       </main>
     </section>
 
-    <!-- SAVED RECIPES PAGE -->
+    <!-- SAVED RECIPES VIEW -->
     <section id="view-saved" class="container hidden">
       <div class="panel">
-        <div class="title-row" style="margin-bottom:8px;">
+        <div class="title-row">
           <h3 class="recipe-title">Saved Recipes</h3>
-          <div class="chip-group">
-            <button id="refresh-saved" class="btn ghost">Refresh</button>
-          </div>
+          <button id="refresh-saved" class="btn ghost">Refresh</button>
         </div>
         <div class="card">
           <div class="card-head">
-            <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
-            <h4>Recipes</h4>
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <h4>Your Collection</h4>
           </div>
-          <ul id="saved-list" class="list saved-list"></ul>
-          <div id="saved-empty" class="muted" style="padding:8px 12px;">No saved recipes yet.</div>
+          <ul id="saved-list" class="list"></ul>
+          <div id="saved-empty" class="muted" style="padding: 12px;">No saved recipes yet.</div>
         </div>
       </div>
     </section>
-    <!-- GROCERIES PAGE -->
+
+    <!-- GROCERIES VIEW -->
     <section id="view-groceries" class="container hidden">
       <div class="panel">
         <div class="title-row">
-          <h2>Groceries</h2>
-          <span style="flex:1"></span>
-          <button id="export-groceries" class="btn ghost" type="button" title="Export to Notes">Export</button>
-          <button id="clear-groceries" class="btn ghost" type="button" title="Clear all">Clear</button>
+          <h3 class="recipe-title">Groceries</h3>
+          <div class="chip-group">
+            <button id="export-groceries" class="btn ghost">Export</button>
+            <button id="clear-groceries" class="btn ghost">Clear All</button>
+          </div>
         </div>
         <p id="groceries-empty" class="muted">Your grocery list is empty. Import a recipe and click “Add to Groceries.”</p>
         <div id="groceries-root" class="groceries"></div>
       </div>
     </section>
-
-
 
     <div id="messages" class="toast" role="status" aria-live="polite"></div>
     <div id="ingredient-backdrop" class="backdrop" aria-hidden="true"></div>
@@ -162,21 +158,20 @@
       <h3 id="ingredient-modal-title" class="modal-title">Ingredient</h3>
       <div id="ingredient-modal-body" class="modal-body"></div>
     </div>
+
+    <footer class="site-footer">
+      <p>
+        <a href="/">Plait</a>
+        <span class="sep">•</span>
+        <a href="https://pages.github.com/">GitHub Pages</a>
+        <span class="sep">•</span>
+        <a href="https://developers.cloudflare.com/workers/">Cloudflare Workers</a>
+        <span class="sep">•</span>
+        <a href="https://schema.org/Recipe">Schema.org</a>
+      </p>
+    </footer>
   </div>
 
-  <script src="app.js?v=5.0"></script>
-
-<footer class="site-footer" aria-label="meta">
-  <p>
-    <a href="/">Plait</a>
-    <span class="sep">•</span>
-    <a href="https://pages.github.com/">GitHub Pages</a>
-    <span class="sep">•</span>
-    <a href="https://developers.cloudflare.com/workers/">Cloudflare Worker</a>
-    <span class="sep">•</span>
-    <a href="https://schema.org/Recipe">Schema.org Recipe</a>
-  </p>
-</footer>
-  
+  <script src="app.js?v=5.2"></script>
 </body>
 </html>
