@@ -1,4 +1,4 @@
-// Plait v0.5.0 — Export to Notes feature
+// Plait v0.5.1 — Code cleanup, removed duplicate sidebar logic
 const WORKER_BASE = "https://prept-parse.zacharyhutz.workers.dev/?url=";
 const STORAGE_KEY = "plait.savedRecipes";
 
@@ -31,48 +31,30 @@ const viewSaved = document.getElementById('view-saved');
 const savedList = document.getElementById('saved-list');
 const savedEmpty = document.getElementById('saved-empty');
 
-// Sidebar toggle (safety)
+// Sidebar toggle
 const sidebar = document.getElementById('sidebar');
 const sidebarToggle = document.getElementById('sidebar-toggle');
 const sidebarClose = document.getElementById('sidebar-close');
+const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+
 function toggleSidebar(){
   if(!sidebar) return;
   sidebar.classList.toggle('open');
+  if(sidebarBackdrop){
+    sidebarBackdrop.classList.toggle('show', sidebar.classList.contains('open'));
+  }
+}
+function closeSidebar(){
+  if(!sidebar) return;
+  sidebar.classList.remove('open');
+  sidebarBackdrop?.classList.remove('show');
 }
 sidebarToggle?.addEventListener('click', toggleSidebar);
-sidebarClose?.addEventListener('click', () => sidebar?.classList.remove('open'));
-
-
-// --- Reliable Sidebar Toggle (idempotent) ---
-(function(){
-  const sidebar = document.getElementById('sidebar');
-  const sidebarToggle = document.getElementById('sidebar-toggle');
-  const sidebarClose = document.getElementById('sidebar-close');
-  const sidebarBackdrop = document.getElementById('sidebar-backdrop'); // optional
-
-  if(!window.__bindSidebarToggleOnce){
-    function toggleSidebar(){
-      if(!sidebar) return;
-      sidebar.classList.toggle('open');
-      if(sidebarBackdrop){
-        if(sidebar.classList.contains('open')) sidebarBackdrop.classList.add('show');
-        else sidebarBackdrop.classList.remove('show');
-      }
-    }
-    function closeSidebar(){
-      if(!sidebar) return;
-      sidebar.classList.remove('open');
-      sidebarBackdrop?.classList.remove('show');
-    }
-    sidebarToggle?.addEventListener('click', toggleSidebar);
-    sidebarClose?.addEventListener('click', closeSidebar);
-    sidebarBackdrop?.addEventListener('click', closeSidebar);
-    document.addEventListener('keydown', (e)=>{
-      if(e.key === 'Escape' && sidebar?.classList.contains('open')) closeSidebar();
-    });
-    window.__bindSidebarToggleOnce = true;
-  }
-})();
+sidebarClose?.addEventListener('click', closeSidebar);
+sidebarBackdrop?.addEventListener('click', closeSidebar);
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && sidebar?.classList.contains('open')) closeSidebar();
+});
 
 const navHome = document.getElementById('nav-home');
 const navSaved = document.getElementById('nav-saved');
@@ -691,16 +673,6 @@ function addCurrentIngredientsToGroceries(){
   setGroceries(existing);
   say('Added to Groceries.');
 }
-const lines = parsedIngredients.map(obj => {
-    const qtyStr = (typeof obj.qty === 'number') ? obj.qty : '';
-    const unitStr = obj.unit || '';
-    const name = obj.name || obj.raw || '';
-    return { raw: [qtyStr, unitStr, name].filter(Boolean).join(' ').replace(/\s+/g,' ').trim(), name, unit: unitStr, qty: obj.qty || null, checked:false };
-  });
-  const existing = getGroceries();
-  for(const it of lines){
-    if(!existing.find(e => e.raw.toLowerCase() == it.raw.toLowerCase())) existing.push(it);
-  }
 
 function renderGroceries(){
   const items = getGroceries();
