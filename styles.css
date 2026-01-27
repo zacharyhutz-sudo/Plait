@@ -363,6 +363,7 @@ body::after {
 .steps {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 16px;
   counter-reset: step-counter;
   padding: 0 !important;
@@ -381,7 +382,8 @@ body::after {
   font-size: 16px;
   font-weight: 500;
   color: var(--p-slate);
-  width: 100%;
+  margin-left: 0 !important;
+  width: auto;
 }
 
 .steps li::before {
@@ -401,6 +403,7 @@ body::after {
   font-weight: 800;
   font-size: 14px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  z-index: 1;
 }
 
 .ing-ref {
@@ -524,7 +527,7 @@ body::after {
   #view-home { padding-top: 100px; }
   .hero-title { line-height: 1; margin-bottom: 24px; }
   .card { padding: 24px; }
-  .steps li { padding: 20px 20px 20px 60px; }
+  .steps li { padding: 20px 20px 20px 72px; }
   .steps li::before { left: 16px; }
   .step-nav { position: static; transform: none; margin: 20px 10px; width: 48px; height: 48px; }
   .step-focus { padding: 40px 20px; min-height: auto; }
