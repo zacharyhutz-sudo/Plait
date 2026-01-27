@@ -369,7 +369,7 @@ body::after {
 .steps li {
   background: white;
   border: 1px solid var(--p-stroke);
-  padding: 24px 32px 24px 72px;
+  padding: 24px 32px 24px 80px;
   border-radius: var(--p-radius-inner);
   list-style: none;
   position: relative;
@@ -394,6 +394,7 @@ body::after {
   place-items: center;
   font-weight: 800;
   font-size: 14px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .ing-ref {
@@ -405,6 +406,11 @@ body::after {
 
 .ing-ref:hover {
   background: linear-gradient(180deg, transparent 40%, var(--p-accent-glow) 40%);
+}
+
+.step-focus-body .ing-ref {
+  color: var(--p-accent);
+  background: linear-gradient(180deg, transparent 70%, rgba(16, 185, 129, 0.2) 70%);
 }
 
 /* --- Cook Mode --- */
@@ -515,7 +521,7 @@ body::after {
   .step-focus { padding: 40px 20px; min-height: auto; }
 }
 
-/* --- Toast --- */
+/* --- Toast & Modals --- */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -533,3 +539,35 @@ body::after {
 }
 
 .toast:not(:empty) { transform: translateX(-50%) translateY(0); }
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 24px 48px;
+  border-radius: var(--p-radius-pill);
+  box-shadow: 0 40px 80px -20px rgba(0,0,0,0.3);
+  z-index: 2000;
+  width: auto;
+  max-width: 90%;
+  text-align: center;
+  border: 2px solid var(--p-accent);
+}
+
+.modal:not(.hidden) {
+  animation: pill-pop 0.5s var(--p-ease-bounce);
+}
+
+@keyframes pill-pop {
+  from { opacity: 0; transform: translate(-50%, -30%) scale(0.8); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.modal-body {
+  font-size: 20px;
+  color: var(--p-ink);
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+}

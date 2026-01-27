@@ -221,6 +221,7 @@ function showHome() {
   El.viewGroceries?.classList.add('hidden');
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   El.navHome?.classList.add('active');
+  closeSidebar();
   if (location.hash !== '' && location.hash !== '#/') history.replaceState(null, '', '#/');
 }
 
@@ -230,6 +231,7 @@ function showSaved() {
   El.viewGroceries?.classList.add('hidden');
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   El.navSaved?.classList.add('active');
+  closeSidebar();
   if (location.hash !== '#/saved') history.replaceState(null, '', '#/saved');
   renderSavedList();
 }
@@ -240,6 +242,7 @@ function showGroceries() {
   El.viewGroceries?.classList.remove('hidden');
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   El.navGroceries?.classList.add('active');
+  closeSidebar();
   if (location.hash !== '#/groceries') history.replaceState(null, '', '#/groceries');
   renderGroceries();
 }
