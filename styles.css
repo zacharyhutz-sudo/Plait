@@ -361,29 +361,31 @@ body::after {
 
 /* --- Steps / Instructions --- */
 .steps {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 16px;
-  counter-reset: step-counter;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 16px !important;
+  counter-reset: step-counter !important;
   padding: 0 !important;
   margin: 0 !important;
-  width: 100%;
+  width: 100% !important;
 }
 
 .steps li {
-  background: white;
-  border: 1px solid var(--p-stroke);
-  padding: 24px 32px 24px 80px;
-  border-radius: var(--p-radius-inner);
-  list-style: none;
-  position: relative;
-  line-height: 1.7;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--p-slate);
-  margin-left: 0 !important;
-  width: auto;
+  display: block !important;
+  background: white !important;
+  border: 1px solid var(--p-stroke) !important;
+  padding: 24px 32px 24px 80px !important;
+  border-radius: var(--p-radius-inner) !important;
+  list-style: none !important;
+  position: relative !important;
+  line-height: 1.7 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  color: var(--p-slate) !important;
+  margin: 0 0 16px 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .steps li::before {
