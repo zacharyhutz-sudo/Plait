@@ -289,17 +289,22 @@ function buildNameVariants(name) {
     
     const parts = filtered.split(/\s+/).filter(Boolean);
     const head = parts.length ? parts[parts.length - 1] : filtered;
-    const singular = toSingular(filtered);
-    const headSing = toSingular(head);
     
+    // Core variants
     results.add(str);
     results.add(filtered);
-    results.add(singular);
     results.add(head);
-    results.add(headSing);
+    
+    // Singular variants
+    results.add(toSingular(str));
+    results.add(toSingular(filtered));
+    results.add(toSingular(head));
   }
   
-  return [...results].map(s => s.trim()).filter(Boolean).sort((a, b) => b.length - a.length);
+  return [...results]
+    .map(s => s.trim())
+    .filter(s => s.length > 2) // Ignore tiny fragments like "a", "of"
+    .sort((a, b) => b.length - a.length);
 }
 
 function toSingular(phrase) {
@@ -472,33 +477,49 @@ function renderSteps(instructions) {
       if (key) variantMap.push({ text: v, key, ingRef: ing });
     }
   }
-  variantMap.sort((a, b) => b.length - a.length);
+  // Greedily match longest variants first to handle "green onion" vs "onion"
+  variantMap.sort((a, b) => b.text.length - a.text.length);
 
   for (const step of arr) {
     const matches = [];
+    
     for (const { text, key } of variantMap) {
-      // Allow flexible spacing/punctuation between words in the variant
+      // Allow flexible spacing/punctuation between words. 
       const regexText = text.split(/[\s\W]+/).map(escapeRegExp).join('[\\s\\W]+');
-      const re = new RegExp(`(?<![A-Za-z])${regexText}(?![A-Za-z])`, 'gi');
+      // Permissive boundary check
+      const re = new RegExp(`(^|[^a-zA-Z0-9])${regexText}([^a-zA-Z0-9]|$)`, 'gi');
+      
       let m;
       while ((m = re.exec(step))) {
-        matches.push({ start: m.index, end: m.index + m[0].length, label: m[0], key });
+        const leadingBoundary = m[1] || '';
+        const start = m.index + leadingBoundary.length;
+        const label = m[0].substring(leadingBoundary.length, m[0].length - (m[2] || '').length);
+        const end = start + label.length;
+        
+        matches.push({ start, end, label, key });
+        re.lastIndex = m.index + 1; // Allow overlapping matches for resolution
       }
     }
     
-    // Resolve overlaps: prioritize longest match
-    matches.sort((a, b) => a.start - b.start || (b.end - b.start) - (a.end - a.start));
+    // Resolve overlaps: prioritize longest match, then earliest match
+    matches.sort((a, b) => (b.end - b.start) - (a.end - a.start) || a.start - b.start);
     
     const filtered = [];
-    let lastEnd = -1;
+    const used = new Array(step.length).fill(false);
+    
     for (const m of matches) {
-      if (m.start >= lastEnd) {
+      let isOverlap = false;
+      for (let i = m.start; i < m.end; i++) {
+        if (used[i]) { isOverlap = true; break; }
+      }
+      if (!isOverlap) {
         filtered.push(m);
-        lastEnd = m.end;
+        for (let i = m.start; i < m.end; i++) used[i] = true;
       }
     }
     
-    // Rebuild step HTML, escaping text segments between matches
+    // Rebuild step HTML
+    filtered.sort((a, b) => a.start - b.start);
     let result = '';
     let pos = 0;
     for (const m of filtered) {
