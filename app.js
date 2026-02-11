@@ -839,6 +839,9 @@ function cookUpdateView() {
     El.stepsList?.classList.add('hidden');
     El.stepFocus?.classList.remove('hidden');
     cookRender();
+    setTimeout(() => {
+      El.stepFocus?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
   } else {
     El.stepFocus?.classList.add('hidden');
     El.stepsList?.classList.remove('hidden');

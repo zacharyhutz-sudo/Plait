@@ -531,7 +531,8 @@ body::after {
   .card { padding: 24px; }
   .steps li { padding: 20px 20px 20px 72px; }
   .steps li::before { left: 16px; }
-  .step-nav { position: static; transform: none; margin: 20px 10px; width: 48px; height: 48px; }
+  .step-nav { position: static; transform: none; width: 48px; height: 48px; }
+  .step-nav-group { display: flex; justify-content: center; gap: 16px; margin-top: 32px; }
   .step-focus { padding: 40px 20px; min-height: auto; }
 }
 
