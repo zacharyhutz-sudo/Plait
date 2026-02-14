@@ -493,11 +493,15 @@ function renderSteps(instructions) {
       while ((m = re.exec(step))) {
         const leadingBoundary = m[1] || '';
         const start = m.index + leadingBoundary.length;
-        const label = m[0].substring(leadingBoundary.length, m[0].length - (m[2] || '').length);
-        const end = start + label.length;
+        const matchStr = m[0].substring(leadingBoundary.length, m[0].length - (m[2] || '').length);
+        const end = start + matchStr.length;
         
-        matches.push({ start, end, label, key });
-        re.lastIndex = m.index + 1; // Allow overlapping matches for resolution
+        matches.push({ start, end, label: matchStr, key });
+
+        // Ensure we advance the lastIndex to prevent infinite loops
+        if (re.lastIndex === m.index) {
+          re.lastIndex++;
+        }
       }
     }
     
